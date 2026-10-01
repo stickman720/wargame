@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard · API Commander</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+:root{
+  --red:#d32f2f; --red-dark:#b71c1c; --red-soft:#fdecea;
+  --orange:#f57c00; --orange-light:#ffb74d; --orange-soft:#fff3e0;
+  --white:#fff; --off-white:#fffaf5; --gray-bg:#f5f3f0; --gray-border:#e8ddd3;
+  --text-dark:#2c2c2c; --text-muted:#7a6e63;
+  --shadow-sm:0 4px 12px rgba(211,47,47,.05);
+  --shadow-md:0 12px 28px rgba(211,47,47,.08),0 2px 8px rgba(245,124,0,.06);
+  --shadow-lg:0 20px 40px -12px rgba(211,47,47,.25);
+  --radius-lg:24px; --transition:all .2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,system-ui,sans-serif}
+body{background:var(--gray-bg);min-height:100vh;padding:1.5rem;color:var(--text-dark);
+  background-image:radial-gradient(circle at 10% 20%,rgba(245,124,0,.03) 0,transparent 30%),
+                   radial-gradient(circle at 90% 80%,rgba(211,47,47,.03) 0,transparent 40%);}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--gray-bg)}
+::-webkit-scrollbar-thumb{background:var(--orange-light);border-radius:20px}
+::-webkit-scrollbar-thumb:hover{background:var(--orange)}
+
+.dashboard{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:1.5rem}
+
+.top-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  background:var(--white);padding:1rem 1.8rem;border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);border-left:6px solid var(--red);border-right:6px solid var(--orange)}
+.brand{display:flex;align-items:center;gap:.8rem}
+.brand-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--red),var(--orange));
+  border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;
+  font-size:1.6rem;box-shadow:0 8px 16px -4px rgba(211,47,47,.4)}
+.brand h1{font-size:1.4rem;font-weight:700}
+.brand h1 span{color:var(--orange)}
+.brand small{display:block;font-size:.7rem;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase}
+.connection-status{display:flex;align-items:center;gap:.6rem;padding:.5rem 1.2rem;
+  border-radius:60px;font-weight:600;font-size:.85rem;background:var(--orange-soft);
+  color:var(--red-dark);border:1px solid rgba(245,124,0,.3)}
+.connection-status.ok{background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7}
+.connection-status.error{background:var(--red-soft);color:var(--red-dark);border-color:#ef9a9a}
+
+.tabs{display:flex;flex-wrap:wrap;gap:.6rem;background:var(--white);padding:.6rem;
+  border-radius:60px;box-shadow:var(--shadow-sm)}
+.tab-btn{background:transparent;border:none;padding:.7rem 1.5rem;border-radius:60px;
+  font-weight:600;font-size:.9rem;color:var(--text-muted);cursor:pointer;transition:var(--transition);
+  display:flex;align-items:center;gap:.5rem;white-space:nowrap}
+.tab-btn:hover{background:var(--orange-soft);color:var(--red-dark)}
+.tab-btn.active{background:linear-gradient(145deg,var(--red),var(--orange));color:#fff;
+  box-shadow:0 8px 16px -6px rgba(211,47,47,.4)}
+
+.panel{display:none;animation:fadeIn .25s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.panel-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:1.5rem}
+@media(max-width:1000px){.panel-grid{grid-template-columns:1fr}}
+
+.card{background:var(--white);border-radius:var(--radius-lg);padding:1.8rem;
+  box-shadow:var(--shadow-md);border:1px solid rgba(245,124,0,.12)}
+.card-header{display:flex;align-items:center;gap:.8rem;margin-bottom:1.6rem;
+  border-bottom:2px dashed var(--orange-soft);padding-bottom:.9rem}
+.card-header i{font-size:1.6rem;color:var(--orange);background:var(--orange-soft);
+  padding:.6rem;border-radius:14px}
+.card-header h2{font-size:1.2rem;font-weight:700;color:var(--red-dark)}
+.card-header h2 span{font-weight:400;color:var(--text-muted);font-size:.85rem;display:block;margin-top:.15rem}
+
+.form-group{margin-bottom:1.2rem}
+.form-group label{display:flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px;color:var(--red-dark);margin-bottom:.5rem}
+.form-group label i{color:var(--orange);width:1.2rem}
+.form-control{width:100%;padding:.9rem 1.2rem;border:2px solid var(--gray-border);
+  border-radius:60px;font-size:.95rem;background:var(--off-white);transition:var(--transition);
+  outline:none;color:var(--text-dark);font-weight:500}
+.form-control:focus{border-color:var(--orange);background:var(--white);
+  box-shadow:0 0 0 4px rgba(245,124,0,.12)}
+.form-control::placeholder{color:#b8aaa0;font-weight:400}
+select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f57c00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 1.2rem center;background-size:1.2rem;cursor:pointer}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:600px){.row-2{grid-template-columns:1fr}}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;
+  padding:.9rem 1.8rem;border:none;border-radius:60px;font-weight:700;font-size:.9rem;
+  cursor:pointer;transition:var(--transition);text-transform:uppercase;letter-spacing:.4px;width:100%}
+.btn-primary{background:linear-gradient(145deg,var(--red),var(--orange));color:#fff;
+  box-shadow:0 10px 20px -6px rgba(211,47,47,.35)}
+.btn-primary:hover{background:linear-gradient(145deg,var(--red-dark),var(--orange));
+  transform:translateY(-2px);box-shadow:0 16px 24px -8px rgba(211,47,47,.5)}
+.btn-primary:disabled{opacity:.7;cursor:not-allowed;transform:none}
+.btn-secondary{background:var(--white);color:var(--red-dark);border:2px solid var(--orange-light)}
+.btn-secondary:hover{background:var(--orange-soft);border-color:var(--orange)}
+
+.list-container{margin-top:1rem;max-height:420px;overflow-y:auto;padding-right:.3rem}
+.list-item{display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 1rem;background:var(--off-white);border-radius:14px;margin-bottom:.6rem;
+  border-left:5px solid var(--orange);transition:var(--transition)}
+.list-item:hover{background:var(--white);box-shadow:0 6px 14px rgba(245,124,0,.08);border-left-color:var(--red)}
+.list-item-info{display:flex;flex-direction:column;gap:.2rem;flex:1;min-width:0}
+.list-item-info strong{font-size:.95rem;color:var(--text-dark)}
+.list-item-info small{font-size:.75rem;color:var(--text-muted);display:flex;gap:.8rem;flex-wrap:wrap}
+.list-item-actions{display:flex;gap:.5rem;flex-shrink:0}
+.action-btn{background:transparent;border:none;color:var(--orange);cursor:pointer;font-size:1rem;
+  padding:.4rem;border-radius:50%;transition:var(--transition);width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center}
+.action-btn:hover{background:var(--orange-soft);color:var(--red);transform:scale(1.1)}
+.action-btn.delete:hover{background:var(--red-soft);color:var(--red-dark)}
+
+.badge{display:inline-block;padding:.15rem .6rem;border-radius:40px;font-size:.7rem;font-weight:700;
+  background:var(--orange-soft);color:var(--red-dark);border:1px solid rgba(245,124,0,.2)}
+.badge.green{background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7}
+.badge.red{background:var(--red-soft);color:var(--red-dark);border-color:#ef9a9a}
+
+.toast-container{position:fixed;top:1.5rem;right:1.5rem;z-index:9999;display:flex;
+  flex-direction:column;gap:.6rem;max-width:380px}
+.toast{background:var(--white);border-radius:14px;padding:1rem 1.2rem;box-shadow:var(--shadow-lg);
+  border-left:6px solid var(--orange);display:flex;align-items:flex-start;gap:.8rem;
+  animation:slideIn .3s ease;font-size:.9rem}
+.toast.success{border-left-color:#2e7d32}
+.toast.error{border-left-color:var(--red)}
+.toast i{font-size:1.2rem;flex-shrink:0;margin-top:.1rem}
+.toast.success i{color:#2e7d32}
+.toast.error i{color:var(--red)}
+.toast-content strong{display:block;margin-bottom:.2rem}
+.toast-content small{color:var(--text-muted);font-size:.8rem;word-break:break-word}
+@keyframes slideIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:1.5rem}
+.modal-overlay.active{display:flex}
+.modal{background:var(--white);max-width:520px;width:100%;border-radius:var(--radius-lg);
+  padding:2rem;box-shadow:var(--shadow-lg);border-top:8px solid var(--orange);
+  max-height:90vh;overflow-y:auto}
+.modal h3{color:var(--red-dark);margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem}
+.modal h3 i{color:var(--orange)}
+.modal-actions{display:flex;gap:.8rem;margin-top:1.5rem}
+
+.empty-state{text-align:center;padding:1.5rem;color:var(--text-muted);font-style:italic;
+  background:var(--off-white);border-radius:14px;font-size:.9rem}
+.loading-spinner{display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,.3);
+  border-radius:50%;border-top-color:#fff;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:600px){
+  body{padding:1rem}
+  .top-bar{flex-direction:column;align-items:flex-start;gap:.8rem}
+  .tabs{overflow-x:auto;flex-wrap:nowrap;padding:.5rem}
+  .tab-btn{padding:.6rem 1rem;font-size:.8rem}
+  .card{padding:1.3rem}
+}
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+
+  <div class="top-bar">
+    <div class="brand">
+      <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+      <div>
+        <h1>ADMIN<span>PANEL</span></h1>
+        <small>api command center</small>
+      </div>
+    </div>
+    <div class="connection-status" id="connectionStatus">
+      <i class="fas fa-circle-notch"></i><span>Not connected</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="users"><i class="fas fa-users"></i> Users</button>
+    <button class="tab-btn" data-tab="buildings"><i class="fas fa-building"></i> Buildings</button>
+    <button class="tab-btn" data-tab="army"><i class="fas fa-fighter-jet"></i> Army Objects</button>
+    <button class="tab-btn" data-tab="assets"><i class="fas fa-coins"></i> Assets</button>
+    <button class="tab-btn" data-tab="locations"><i class="fas fa-globe"></i> Cities / Countries</button>
+    <button class="tab-btn" data-tab="activity"><i class="fas fa-calendar-week"></i> Weekly Activity</button>
+  </div>
+
+  <!-- ================= USERS ================= -->
+  <div id="panel-users" class="panel active">
+    <div class="panel-grid">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-user-plus"></i>
+          <h2 id="userFormTitle">Add New User <span>POST /api/user</span></h2>
+        </div>
+        <form id="userForm">
+          <input type="hidden" id="userId" value="">
+          <div class="form-group">
+            <label><i class="fas fa-user"></i> Username</label>
+            <input type="text" class="form-control" id="userName" placeholder="e.g. john_doe" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-envelope"></i> Email</label>
+            <input type="email" class="form-control" id="userEmail" placeholder="john@example.com" required>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label><i class="fas fa-lock"></i> Password</label>
+              <input type="password" class="form-control" id="userPassword" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-tag"></i> Role</label>
+              <select class="form-control" id="userRole">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+                <option value="moderator">Moderator</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:.6rem">
+            <button type="submit" class="btn btn-primary" id="userSubmitBtn">
+              <i class="fas fa-save"></i> <span id="userSubmitText">Create User</span>
+            </button>
+            <button type="button" class="btn btn-secondary" id="userCancelBtn"
+                    style="display:none;flex:0 0 auto;width:auto;padding:.9rem 1.2rem">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-list"></i>
+          <h2>User List <span>GET /api/user</span></h2>
+          <button class="action-btn" id="refreshUsers" title="Refresh"
+                  style="margin-left:auto;width:auto;padding:0 .6rem">
+            <i class="fas fa-rotate"></i>
+          </button>
+        </div>
+        <div class="list-container" id="userList">
+          <div class="empty-state">Loading users…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= BUILDINGS ================= -->
+  <div id="panel-buildings" class="panel">
+    <div class="panel-grid">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-plus-circle"></i>
+          <h2>Add Building <span>POST /api/building</span></h2>
+        </div>
+        <form id="buildingForm">
+          <div class="form-group">
+            <label><i class="fas fa-building"></i> Building Name</label>
+            <input type="text" class="form-control" id="buildName" placeholder="e.g. HQ Tower" required>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label><i class="fas fa-chart-pie"></i> Usage</label>
+              <select class="form-control" id="buildUsage">
+                <option value="residential">Residential</option>
+                <option value="commercial">Commercial</option>
+                <option value="industrial">Industrial</option>
+                <option value="military">Military</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-dollar-sign"></i> Earns</label>
+              <input type="number" class="form-control" id="buildEarns" value="500">
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label><i class="fas fa-hammer"></i> Create Cost</label>
+              <input type="number" class="form-control" id="buildCreateCost" value="1000">
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-arrow-up"></i> Update Cost</label>
+              <input type="number" class="form-control" id="buildUpdateCost" value="200">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="buildingSubmitBtn">
+            <i class="fas fa-save"></i> Add Building
+          </button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-list"></i>
+          <h2>Buildings <span>GET /api/building</span></h2>
+          <button class="action-btn" id="refreshBuildings" title="Refresh"
+                  style="margin-left:auto;width:auto;padding:0 .6rem">
+            <i class="fas fa-rotate"></i>
+          </button>
+        </div>
+        <div class="list-container" id="buildingList">
+          <div class="empty-state">Loading buildings…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ARMY ================= -->
+  <div id="panel-army" class="panel">
+    <div class="panel-grid">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-fighter-jet"></i>
+          <h2>Add Army Object <span>POST /api/army</span></h2>
+        </div>
+        <form id="armyForm">
+          <div class="form-group">
+            <label><i class="fas fa-tag"></i> Name</label>
+            <input type="text" class="form-control" id="armyName" placeholder="e.g. Tank Battalion" required>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label><i class="fas fa-shield"></i> Type</label>
+              <select class="form-control" id="armyType">
+                <option value="infantry">Infantry</option>
+                <option value="armor">Armor</option>
+                <option value="air">Air Force</option>
+                <option value="navy">Navy</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-bolt"></i> Power</label>
+              <input type="number" class="form-control" id="armyPower" value="100">
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-coins"></i> Cost</label>
+            <input type="number" class="form-control" id="armyCost" value="5000">
+          </div>
+          <button type="submit" class="btn btn-primary" id="armySubmitBtn">
+            <i class="fas fa-save"></i> Add Army Object
+          </button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-list"></i>
+          <h2>Army Objects <span>GET /api/army</span></h2>
+          <button class="action-btn" id="refreshArmy" title="Refresh"
+                  style="margin-left:auto;width:auto;padding:0 .6rem">
+            <i class="fas fa-rotate"></i>
+          </button>
+        </div>
+        <div class="list-container" id="armyList">
+          <div class="empty-state">Loading army objects…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ASSETS ================= -->
+  <div id="panel-assets" class="panel">
+    <div class="panel-grid">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-coins"></i>
+          <h2>Add Asset <span>POST /api/asset</span></h2>
+        </div>
+        <form id="assetForm">
+          <div class="form-group">
+            <label><i class="fas fa-cube"></i> Name</label>
+            <input type="text" class="form-control" id="assetName" placeholder="e.g. Gold Reserve" required>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label><i class="fas fa-layer-group"></i> Type</label>
+              <select class="form-control" id="assetType">
+                <option value="resource">Resource</option>
+                <option value="currency">Currency</option>
+                <option value="equipment">Equipment</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-scale-balanced"></i> Quantity</label>
+              <input type="number" class="form-control" id="assetQty" value="1000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-dollar-sign"></i> Value per unit</label>
+            <input type="number" class="form-control" id="assetValue" value="10">
+          </div>
+          <button type="submit" class="btn btn-primary" id="assetSubmitBtn">
+            <i class="fas fa-save"></i> Add Asset
+          </button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-list"></i>
+          <h2>Assets <span>GET /api/asset</span></h2>
+          <button class="action-btn" id="refreshAssets" title="Refresh"
+                  style="margin-left:auto;width:auto;padding:0 .6rem">
+            <i class="fas fa-rotate"></i>
+          </button>
+        </div>
+        <div class="list-container" id="assetList">
+          <div class="empty-state">Loading assets…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= LOCATIONS ================= -->
+  <div id="panel-locations" class="panel">
+    <div class="panel-grid">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-map-pin"></i>
+          <h2>Add City / Country <span>POST /api/cityorcountry</span></h2>
+        </div>
+        <form id="locationForm">
+          <div class="form-group">
+            <label><i class="fas fa-location-dot"></i> Name</label>
+            <input type="text" class="form-control" id="locName" placeholder="e.g. New Athens" required>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label><i class="fas fa-flag"></i> Type</label>
+              <select class="form-control" id="locType">
+                <option value="city">City</option>
+                <option value="country">Country</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-users"></i> Population</label>
+              <input type="number" class="form-control" id="locPopulation" value="1000000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-globe"></i> Region</label>
+            <input type="text" class="form-control" id="locRegion" placeholder="e.g. Europe">
+          </div>
+          <button type="submit" class="btn btn-primary" id="locationSubmitBtn">
+            <i class="fas fa-save"></i> Add Location
+          </button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-list"></i>
+          <h2>Locations <span>GET /api/cityorcountry</span></h2>
+          <button class="action-btn" id="refreshLocations" title="Refresh"
+                  style="margin-left:auto;width:auto;padding:0 .6rem">
+            <i class="fas fa-rotate"></i>
+          </button>
+        </div>
+        <div class="list-container" id="locationList">
+          <div class="empty-state">Loading locations…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= WEEKLY ACTIVITY ================= -->
+  <div id="panel-activity" class="panel">
+    <div class="panel-grid">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-calendar-plus"></i>
+          <h2>New Weekly Activity <span>POST /api/buildingactivity</span></h2>
+        </div>
+        <form id="activityForm">
+          <div class="form-group">
+            <label><i class="fas fa-building"></i> Building Name</label>
+            <input type="text" class="form-control" id="actBuilding"
+                   placeholder="e.g. Central Plaza" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-cube"></i> Army Object / Asset Name</label>
+            <input type="text" class="form-control" id="actObject"
+                   placeholder="e.g. Oil Reserve / 1st Armored Division" required>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label><i class="fas fa-diagram-project"></i> Activity</label>
+              <select class="form-control" id="actOp">
+                <option value="produce">Producing</option>
+                <option value="user">Using</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-scale-balanced"></i> Amount</label>
+              <input type="number" min="0" class="form-control" id="actAmount" value="1" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="activitySubmitBtn">
+            <i class="fas fa-save"></i> Record Activity
+          </button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-list"></i>
+          <h2>Recent Activities <span>GET /api/buildingactivity</span></h2>
+          <button class="action-btn" id="refreshActivity" title="Refresh"
+                  style="margin-left:auto;width:auto;padding:0 .6rem">
+            <i class="fas fa-rotate"></i>
+          </button>
+        </div>
+        <div class="list-container" id="activityList">
+          <div class="empty-state">Loading activities…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG + UTILITIES
+   ============================================================ */
+const API_BASE = '';
+const $ = (s, c = document) => c.querySelector(s);
+const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+
+function escapeHtml(t){
+  if(t==null) return '';
+  return String(t).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function toast(type, title, message, timeout = 4000){
+  const icons = {success:'fa-circle-check',error:'fa-circle-exclamation',info:'fa-circle-info'};
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i>
+    <div class="toast-content"><strong>${escapeHtml(title)}</strong>
+    <small>${escapeHtml(message)}</small></div>`;
+  $('#toastContainer').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(100%)';
+    el.style.transition='all .3s ease';setTimeout(()=>el.remove(),300);}, timeout);
+}
+function setConnectionStatus(status, text){
+  const el = $('#connectionStatus');
+  el.className = 'connection-status' + (status?' '+status:'');
+  const icon = status==='ok'?'fa-circle-check':status==='error'?'fa-circle-xmark':'fa-circle-notch';
+  el.innerHTML = `<i class="fas ${icon}"></i><span>${escapeHtml(text)}</span>`;
+}
+function setBtnLoading(btn, loading, originalText){
+  if(loading){ btn.disabled = true; btn._html = btn.innerHTML;
+    btn.innerHTML = `<span class="loading-spinner"></span> Working…`; }
+  else { btn.disabled = false;
+    if(originalText) btn.innerHTML = originalText;
+    else if(btn._html) btn.innerHTML = btn._html; }
+}
+
+async function apiFetch(path, options = {}){
+  const config = {
+    headers: {'Content-Type':'application/json', ...(options.headers||{})},
+    ...options,
+  };
+  if(config.body && typeof config.body === 'object') config.body = JSON.stringify(config.body);
+  try {
+    const res = await fetch(API_BASE + path, config);
+    let data = null; const text = await res.text();
+    if(text){ try{ data = JSON.parse(text); }catch{ data = {raw:text}; } }
+    let message = '';
+    if(data){ message = data.message || data.error || data.msg || '';
+      if(!message && typeof data === 'string') message = data; }
+    if(!message) message = res.statusText || 'Request completed';
+    return { ok: res.ok, status: res.status, data, message };
+  } catch(err){
+    return { ok:false, status:0, data:null, message: err.message || 'Network error' };
+  }
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+const tabLoaders = {
+  users: () => loadUsers(),
+  buildings: () => loadBuildings(),
+  army: () => loadArmy(),
+  assets: () => loadAssets(),
+  locations: () => loadLocations(),
+  activity: () => loadActivities(),
+};
+$$('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', ()=>{
+    $$('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const t = btn.dataset.tab;
+    $$('.panel').forEach(p => p.classList.remove('active'));
+    $(`#panel-${t}`).classList.add('active');
+    if(tabLoaders[t]) tabLoaders[t]();
+  });
+});
+
+/* ============================================================
+   USERS
+   ============================================================ */
+async function loadUsers(){
+  const c = $('#userList'); c.innerHTML = `<div class="empty-state">Loading users…</div>`;
+  const res = await apiFetch('/api/user');
+  if(!res.ok){ c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(res.message)}</div>`;
+    setConnectionStatus('error','API error'); return; }
+  const users = Array.isArray(res.data) ? res.data : (res.data?.users || []);
+  if(!users.length){ c.innerHTML = `<div class="empty-state">No users found.</div>`; return; }
+  c.innerHTML = '';
+  users.forEach(u => c.appendChild(renderUserItem(u)));
+  setConnectionStatus('ok','Connected');
+}
+function renderUserItem(user){
+  const id = user.id ?? user._id ?? user.userid ?? '';
+  const name = user.username ?? user.name ?? '—';
+  const email = user.email ?? '—';
+  const role = user.role ?? 'user';
+  const el = document.createElement('div');
+  el.className = 'list-item'; el.dataset.id = id;
+  el.innerHTML = `
+    <div class="list-item-info">
+      <strong>${escapeHtml(name)}</strong>
+      <small><span><i class="fas fa-envelope"></i> ${escapeHtml(email)}</span>
+        <span class="badge">${escapeHtml(role)}</span>
+        <span>ID: ${escapeHtml(id)}</span></small>
+    </div>
+    <div class="list-item-actions">
+      <button class="action-btn view-user" title="View"><i class="fas fa-eye"></i></button>
+      <button class="action-btn inventory-user" title="Inventory"><i class="fas fa-boxes-stacked"></i></button>
+      <button class="action-btn edit-user" title="Edit"><i class="fas fa-pen"></i></button>
+      <button class="action-btn delete delete-user" title="Delete"><i class="fas fa-trash-can"></i></button>
+    </div>`;
+  return el;
+}
+$('#userList').addEventListener('click', async (e)=>{
+  const item = e.target.closest('.list-item'); if(!item) return;
+  const id = item.dataset.id;
+
+  if(e.target.closest('.view-user')){
+    const r = await apiFetch(`/api/user/${id}`);
+    if(r.ok) openModal(`<h3><i class="fas fa-user"></i> User</h3>
+      <pre style="background:var(--off-white);padding:1rem;border-radius:12px;overflow:auto;font-size:.85rem">${escapeHtml(JSON.stringify(r.data,null,2))}</pre>
+      <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal()">Close</button></div>`);
+    else toast('error','Fetch failed',r.message);
+  }
+  if(e.target.closest('.inventory-user')){
+    openInventoryModal(id, item.querySelector('strong').textContent);
+  }
+  if(e.target.closest('.edit-user')){
+    const r = await apiFetch(`/api/user/${id}`);
+    if(!r.ok){ toast('error','Fetch failed',r.message); return; }
+    const u = r.data?.user || r.data || {};
+    $('#userId').value = id;
+    $('#userName').value = u.username ?? '';
+    $('#userEmail').value = u.email ?? '';
+    $('#userRole').value = u.role ?? 'user';
+    $('#userPassword').value = '';
+    $('#userFormTitle').innerHTML = `Edit User <span>UPDATE /api/user/${id}</span>`;
+    $('#userSubmitText').textContent = 'Update User';
+    $('#userCancelBtn').style.display = 'inline-flex';
+  }
+  if(e.target.closest('.delete-user')){
+    if(!confirm('Delete this user?')) return;
+    const r = await apiFetch(`/api/user/${id}`, {method:'DELETE'});
+    if(r.ok){ toast('success','Deleted',r.message); item.remove(); }
+    else toast('error','Delete failed',r.message);
+  }
+});
+
+function openInventoryModal(userId, username){
+  openModal(`
+    <h3><i class="fas fa-boxes-stacked"></i> Set Inventory — ${escapeHtml(username)}</h3>
+    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem">
+      User ID: <strong>${escapeHtml(userId)}</strong> ·
+      <code>PUT /api/inventory/${escapeHtml(userId)}</code>
+    </p>
+    <form id="inventoryForm">
+      <div class="form-group">
+        <label><i class="fas fa-tag"></i> Object Name</label>
+        <input type="text" class="form-control" id="invObjectName"
+               placeholder="e.g. 1st Armored Division / Oil Reserve" required>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-scale-balanced"></i> New Amount</label>
+        <input type="number" min="0" class="form-control" id="invNewAmount" required>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn btn-primary" id="invSubmitBtn">
+          <i class="fas fa-save"></i> Save Inventory
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>`);
+  $('#inventoryForm').addEventListener('submit', async (ev)=>{
+    ev.preventDefault();
+    const objectname = $('#invObjectName').value.trim();
+    const newamount = Number($('#invNewAmount').value);
+    if(!objectname){ toast('error','Invalid input','Object name required'); return; }
+    if(isNaN(newamount) || newamount < 0){ toast('error','Invalid amount','Amount must be >= 0'); return; }
+    const btn = $('#invSubmitBtn'); setBtnLoading(btn, true);
+    const r = await apiFetch(`/api/inventory/${userId}`, {method:'PUT', body:{objectname,newamount}});
+    setBtnLoading(btn, false, '<i class="fas fa-save"></i> Save Inventory');
+    if(r.ok){ toast('success','Inventory updated',`${objectname} → ${newamount}`); closeModal(); }
+    else toast('error','Update failed',r.message);
+  });
+}
+
+$('#userForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const id = $('#userId').value; const isEdit = !!id;
+  const btn = $('#userSubmitBtn');
+  const payload = {
+    username: $('#userName').value.trim(),
+    email: $('#userEmail').value.trim(),
+    role: $('#userRole').value,
+  };
+  const pwd = $('#userPassword').value; if(pwd) payload.password = pwd;
+  setBtnLoading(btn, true);
+  const r = await apiFetch(isEdit ? `/api/user/${id}` : '/api/user',
+    {method: isEdit?'PUT':'POST', body: payload});
+  setBtnLoading(btn, false, isEdit ? 'Update User' : 'Create User');
+  if(r.ok){ toast('success', isEdit?'Updated':'Created', r.message);
+    resetUserForm(); loadUsers(); }
+  else toast('error', isEdit?'Update failed':'Create failed', r.message);
+});
+function resetUserForm(){
+  $('#userForm').reset(); $('#userId').value = '';
+  $('#userFormTitle').innerHTML = 'Add New User <span>POST /api/user</span>';
+  $('#userSubmitText').textContent = 'Create User';
+  $('#userCancelBtn').style.display = 'none';
+}
+$('#userCancelBtn').addEventListener('click', resetUserForm);
+$('#refreshUsers').addEventListener('click', loadUsers);
+
+/* ============================================================
+   BUILDINGS
+   ============================================================ */
+async function loadBuildings(){
+  const c = $('#buildingList'); c.innerHTML = `<div class="empty-state">Loading…</div>`;
+  const r = await apiFetch('/api/building');
+  if(!r.ok){ c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  const list = Array.isArray(r.data) ? r.data : (r.data?.buildings || []);
+  if(!list.length){ c.innerHTML = `<div class="empty-state">No buildings.</div>`; return; }
+  c.innerHTML = '';
+  list.forEach(b => {
+    const id = b.id ?? b._id ?? '';
+    const el = document.createElement('div'); el.className = 'list-item'; el.dataset.id = id;
+    el.innerHTML = `
+      <div class="list-item-info">
+        <strong>${escapeHtml(b.name||'—')}</strong>
+        <small><span class="badge">${escapeHtml(b.usage||'—')}</span>
+          <span>Earns: $${escapeHtml(b.earns??0)}</span>
+          <span>Cost: $${escapeHtml(b.create_cost??b.createcost??0)}</span></small>
+      </div>
+      <div class="list-item-actions">
+        <button class="action-btn edit-building"><i class="fas fa-pen"></i></button>
+        <button class="action-btn delete delete-building"><i class="fas fa-trash-can"></i></button>
+      </div>`;
+    c.appendChild(el);
+  });
+}
+$('#buildingForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = $('#buildingSubmitBtn');
+  const payload = {
+    name: $('#buildName').value.trim(),
+    usage: $('#buildUsage').value,
+    earns: Number($('#buildEarns').value),
+    create_cost: Number($('#buildCreateCost').value),
+    update_cost: Number($('#buildUpdateCost').value),
+  };
+  setBtnLoading(btn, true);
+  const r = await apiFetch('/api/building', {method:'POST', body: payload});
+  setBtnLoading(btn, false);
+  if(r.ok){ toast('success','Building created', r.message);
+    $('#buildingForm').reset(); loadBuildings(); }
+  else toast('error','Create failed', r.message);
+});
+$('#buildingList').addEventListener('click', async (e)=>{
+  const item = e.target.closest('.list-item'); if(!item) return;
+  const id = item.dataset.id;
+  if(e.target.closest('.delete-building')){
+    if(!confirm('Delete this building?')) return;
+    const r = await apiFetch(`/api/building/${id}`, {method:'DELETE'});
+    if(r.ok){ toast('success','Deleted', r.message); item.remove(); }
+    else toast('error','Delete failed', r.message);
+  }
+  if(e.target.closest('.edit-building')){
+    const r = await apiFetch(`/api/building/${id}`);
+    if(!r.ok) return toast('error','Fetch failed', r.message);
+    const b = r.data?.building || r.data || {};
+    openModal(`
+      <h3><i class="fas fa-pen"></i> Edit Building</h3>
+      <form id="modalBuildingForm">
+        <div class="form-group"><label><i class="fas fa-building"></i> Name</label>
+          <input type="text" class="form-control" id="mBName" value="${escapeHtml(b.name||'')}" required></div>
+        <div class="row-2">
+          <div class="form-group"><label><i class="fas fa-chart-pie"></i> Usage</label>
+            <select class="form-control" id="mBUsage">
+              ${['residential','commercial','industrial','military'].map(u=>
+                `<option value="${u}" ${b.usage===u?'selected':''}>${u}</option>`).join('')}
+            </select></div>
+          <div class="form-group"><label><i class="fas fa-dollar-sign"></i> Earns</label>
+            <input type="number" class="form-control" id="mBEarns" value="${escapeHtml(b.earns??0)}"></div>
+        </div>
+        <div class="row-2">
+          <div class="form-group"><label><i class="fas fa-hammer"></i> Create Cost</label>
+            <input type="number" class="form-control" id="mBCreate" value="${escapeHtml(b.create_cost??b.createcost??0)}"></div>
+          <div class="form-group"><label><i class="fas fa-arrow-up"></i> Update Cost</label>
+            <input type="number" class="form-control" id="mBUpdate" value="${escapeHtml(b.update_cost??b.updatecost??0)}"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+      </form>`);
+    $('#modalBuildingForm').addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const payload = {
+        name: $('#mBName').value.trim(),
+        usage: $('#mBUsage').value,
+        earns: Number($('#mBEarns').value),
+        create_cost: Number($('#mBCreate').value),
+        update_cost: Number($('#mBUpdate').value),
+      };
+      const r2 = await apiFetch(`/api/building/${id}`, {method:'PUT', body: payload});
+      if(r2.ok){ toast('success','Updated', r2.message); closeModal(); loadBuildings(); }
+      else toast('error','Update failed', r2.message);
+    });
+  }
+});
+$('#refreshBuildings').addEventListener('click', loadBuildings);
+
+/* ============================================================
+   ARMY
+   ============================================================ */
+async function loadArmy(){
+  const c = $('#armyList'); c.innerHTML = `<div class="empty-state">Loading…</div>`;
+  const r = await apiFetch('/api/army');
+  if(!r.ok){ c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  const list = Array.isArray(r.data) ? r.data : (r.data?.army || []);
+  if(!list.length){ c.innerHTML = `<div class="empty-state">No army objects.</div>`; return; }
+  c.innerHTML = '';
+  list.forEach(a => {
+    const id = a.id ?? a._id ?? '';
+    const el = document.createElement('div'); el.className = 'list-item'; el.dataset.id = id;
+    el.innerHTML = `
+      <div class="list-item-info">
+        <strong>${escapeHtml(a.name||'—')}</strong>
+        <small><span class="badge">${escapeHtml(a.type||'—')}</span>
+          <span>Power: ${escapeHtml(a.power??0)}</span>
+          <span>Cost: $${escapeHtml(a.cost??0)}</span></small>
+      </div>
+      <div class="list-item-actions">
+        <button class="action-btn edit-army"><i class="fas fa-pen"></i></button>
+        <button class="action-btn delete delete-army"><i class="fas fa-trash-can"></i></button>
+      </div>`;
+    c.appendChild(el);
+  });
+}
+$('#armyForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = $('#armySubmitBtn');
+  const payload = {
+    name: $('#armyName').value.trim(),
+    type: $('#armyType').value,
+    power: Number($('#armyPower').value),
+    cost: Number($('#armyCost').value),
+  };
+  setBtnLoading(btn, true);
+  const r = await apiFetch('/api/army', {method:'POST', body: payload});
+  setBtnLoading(btn, false);
+  if(r.ok){ toast('success','Army object created', r.message);
+    $('#armyForm').reset(); loadArmy(); }
+  else toast('error','Create failed', r.message);
+});
+$('#armyList').addEventListener('click', async (e)=>{
+  const item = e.target.closest('.list-item'); if(!item) return;
+  const id = item.dataset.id;
+  if(e.target.closest('.delete-army')){
+    if(!confirm('Delete this army object?')) return;
+    const r = await apiFetch(`/api/army/${id}`, {method:'DELETE'});
+    if(r.ok){ toast('success','Deleted', r.message); item.remove(); }
+    else toast('error','Delete failed', r.message);
+  }
+  if(e.target.closest('.edit-army')){
+    const r = await apiFetch(`/api/army/${id}`);
+    if(!r.ok) return toast('error','Fetch failed', r.message);
+    const a = r.data?.army || r.data || {};
+    openModal(`
+      <h3><i class="fas fa-pen"></i> Edit Army Object</h3>
+      <form id="modalArmyForm">
+        <div class="form-group"><label><i class="fas fa-tag"></i> Name</label>
+          <input type="text" class="form-control" id="mAName" value="${escapeHtml(a.name||'')}" required></div>
+        <div class="row-2">
+          <div class="form-group"><label><i class="fas fa-shield"></i> Type</label>
+            <select class="form-control" id="mAType">
+              ${['infantry','armor','air','navy'].map(t=>
+                `<option value="${t}" ${a.type===t?'selected':''}>${t}</option>`).join('')}
+            </select></div>
+          <div class="form-group"><label><i class="fas fa-bolt"></i> Power</label>
+            <input type="number" class="form-control" id="mAPower" value="${escapeHtml(a.power??0)}"></div>
+        </div>
+        <div class="form-group"><label><i class="fas fa-coins"></i> Cost</label>
+          <input type="number" class="form-control" id="mACost" value="${escapeHtml(a.cost??0)}"></div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+      </form>`);
+    $('#modalArmyForm').addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const payload = {
+        name: $('#mAName').value.trim(),
+        type: $('#mAType').value,
+        power: Number($('#mAPower').value),
+        cost: Number($('#mACost').value),
+      };
+      const r2 = await apiFetch(`/api/army/${id}`, {method:'PUT', body: payload});
+      if(r2.ok){ toast('success','Updated', r2.message); closeModal(); loadArmy(); }
+      else toast('error','Update failed', r2.message);
+    });
+  }
+});
+$('#refreshArmy').addEventListener('click', loadArmy);
+
+/* ============================================================
+   ASSETS
+   ============================================================ */
+async function loadAssets(){
+  const c = $('#assetList'); c.innerHTML = `<div class="empty-state">Loading…</div>`;
+  const r = await apiFetch('/api/asset');
+  if(!r.ok){ c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  const list = Array.isArray(r.data) ? r.data : (r.data?.assets || []);
+  if(!list.length){ c.innerHTML = `<div class="empty-state">No assets.</div>`; return; }
+  c.innerHTML = '';
+  list.forEach(a => {
+    const id = a.id ?? a._id ?? '';
+    const el = document.createElement('div'); el.className = 'list-item'; el.dataset.id = id;
+    el.innerHTML = `
+      <div class="list-item-info">
+        <strong>${escapeHtml(a.name||'—')}</strong>
+        <small><span class="badge">${escapeHtml(a.type||'—')}</span>
+          <span>Qty: ${escapeHtml(a.quantity??0)}</span>
+          <span>Value: $${escapeHtml(a.value??0)}</span></small>
+      </div>
+      <div class="list-item-actions">
+        <button class="action-btn edit-asset"><i class="fas fa-pen"></i></button>
+        <button class="action-btn delete delete-asset"><i class="fas fa-trash-can"></i></button>
+      </div>`;
+    c.appendChild(el);
+  });
+}
+$('#assetForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = $('#assetSubmitBtn');
+  const payload = {
+    name: $('#assetName').value.trim(),
+    type: $('#assetType').value,
+    quantity: Number($('#assetQty').value),
+    value: Number($('#assetValue').value),
+  };
+  setBtnLoading(btn, true);
+  const r = await apiFetch('/api/asset', {method:'POST', body: payload});
+  setBtnLoading(btn, false);
+  if(r.ok){ toast('success','Asset created', r.message);
+    $('#assetForm').reset(); loadAssets(); }
+  else toast('error','Create failed', r.message);
+});
+$('#assetList').addEventListener('click', async (e)=>{
+  const item = e.target.closest('.list-item'); if(!item) return;
+  const id = item.dataset.id;
+  if(e.target.closest('.delete-asset')){
+    if(!confirm('Delete this asset?')) return;
+    const r = await apiFetch(`/api/asset/${id}`, {method:'DELETE'});
+    if(r.ok){ toast('success','Deleted', r.message); item.remove(); }
+    else toast('error','Delete failed', r.message);
+  }
+  if(e.target.closest('.edit-asset')){
+    const r = await apiFetch(`/api/asset/${id}`);
+    if(!r.ok) return toast('error','Fetch failed', r.message);
+    const a = r.data?.asset || r.data || {};
+    openModal(`
+      <h3><i class="fas fa-pen"></i> Edit Asset</h3>
+      <form id="modalAssetForm">
+        <div class="form-group"><label><i class="fas fa-cube"></i> Name</label>
+          <input type="text" class="form-control" id="mAsName" value="${escapeHtml(a.name||'')}" required></div>
+        <div class="row-2">
+          <div class="form-group"><label><i class="fas fa-layer-group"></i> Type</label>
+            <select class="form-control" id="mAsType">
+              ${['resource','currency','equipment'].map(t=>
+                `<option value="${t}" ${a.type===t?'selected':''}>${t}</option>`).join('')}
+            </select></div>
+          <div class="form-group"><label><i class="fas fa-scale-balanced"></i> Quantity</label>
+            <input type="number" class="form-control" id="mAsQty" value="${escapeHtml(a.quantity??0)}"></div>
+        </div>
+        <div class="form-group"><label><i class="fas fa-dollar-sign"></i> Value per unit</label>
+          <input type="number" class="form-control" id="mAsValue" value="${escapeHtml(a.value??0)}"></div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+      </form>`);
+    $('#modalAssetForm').addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const payload = {
+        name: $('#mAsName').value.trim(),
+        type: $('#mAsType').value,
+        quantity: Number($('#mAsQty').value),
+        value: Number($('#mAsValue').value),
+      };
+      const r2 = await apiFetch(`/api/asset/${id}`, {method:'PUT', body: payload});
+      if(r2.ok){ toast('success','Updated', r2.message); closeModal(); loadAssets(); }
+      else toast('error','Update failed', r2.message);
+    });
+  }
+});
+$('#refreshAssets').addEventListener('click', loadAssets);
+
+/* ============================================================
+   LOCATIONS
+   ============================================================ */
+async function loadLocations(){
+  const c = $('#locationList'); c.innerHTML = `<div class="empty-state">Loading…</div>`;
+  const r = await apiFetch('/api/cityorcountry');
+  if(!r.ok){ c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  const list = Array.isArray(r.data) ? r.data : (r.data?.locations || []);
+  if(!list.length){ c.innerHTML = `<div class="empty-state">No locations.</div>`; return; }
+  c.innerHTML = '';
+  list.forEach(l => {
+    const id = l.id ?? l._id ?? '';
+    const el = document.createElement('div'); el.className = 'list-item'; el.dataset.id = id;
+    el.innerHTML = `
+      <div class="list-item-info">
+        <strong>${escapeHtml(l.name||'—')}</strong>
+        <small><span class="badge">${escapeHtml(l.type||'—')}</span>
+          <span>Pop: ${escapeHtml(l.population??0)}</span>
+          <span>${escapeHtml(l.region||'—')}</span></small>
+      </div>
+      <div class="list-item-actions">
+        <button class="action-btn edit-location"><i class="fas fa-pen"></i></button>
+        <button class="action-btn delete delete-location"><i class="fas fa-trash-can"></i></button>
+      </div>`;
+    c.appendChild(el);
+  });
+}
+$('#locationForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = $('#locationSubmitBtn');
+  const payload = {
+    name: $('#locName').value.trim(),
+    type: $('#locType').value,
+    population: Number($('#locPopulation').value),
+    region: $('#locRegion').value.trim(),
+  };
+  setBtnLoading(btn, true);
+  const r = await apiFetch('/api/cityorcountry', {method:'POST', body: payload});
+  setBtnLoading(btn, false);
+  if(r.ok){ toast('success','Location created', r.message);
+    $('#locationForm').reset(); loadLocations(); }
+  else toast('error','Create failed', r.message);
+});
+$('#locationList').addEventListener('click', async (e)=>{
+  const item = e.target.closest('.list-item'); if(!item) return;
+  const id = item.dataset.id;
+  if(e.target.closest('.delete-location')){
+    if(!confirm('Delete this location?')) return;
+    const r = await apiFetch(`/api/cityorcountry/${id}`, {method:'DELETE'});
+    if(r.ok){ toast('success','Deleted', r.message); item.remove(); }
+    else toast('error','Delete failed', r.message);
+  }
+  if(e.target.closest('.edit-location')){
+    const r = await apiFetch(`/api/cityorcountry/${id}`);
+    if(!r.ok) return toast('error','Fetch failed', r.message);
+    const l = r.data?.location || r.data || {};
+    openModal(`
+      <h3><i class="fas fa-pen"></i> Edit Location</h3>
+      <form id="modalLocationForm">
+        <div class="form-group"><label><i class="fas fa-location-dot"></i> Name</label>
+          <input type="text" class="form-control" id="mLName" value="${escapeHtml(l.name||'')}" required></div>
+        <div class="row-2">
+          <div class="form-group"><label><i class="fas fa-flag"></i> Type</label>
+            <select class="form-control" id="mLType">
+              <option value="city" ${l.type==='city'?'selected':''}>City</option>
+              <option value="country" ${l.type==='country'?'selected':''}>Country</option>
+            </select></div>
+          <div class="form-group"><label><i class="fas fa-users"></i> Population</label>
+            <input type="number" class="form-control" id="mLPop" value="${escapeHtml(l.population??0)}"></div>
+        </div>
+        <div class="form-group"><label><i class="fas fa-globe"></i> Region</label>
+          <input type="text" class="form-control" id="mLRegion" value="${escapeHtml(l.region||'')}"></div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+      </form>`);
+    $('#modalLocationForm').addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const payload = {
+        name: $('#mLName').value.trim(),
+        type: $('#mLType').value,
+        population: Number($('#mLPop').value),
+        region: $('#mLRegion').value.trim(),
+      };
+      const r2 = await apiFetch(`/api/cityorcountry/${id}`, {method:'PUT', body: payload});
+      if(r2.ok){ toast('success','Updated', r2.message); closeModal(); loadLocations(); }
+      else toast('error','Update failed', r2.message);
+    });
+  }
+});
+$('#refreshLocations').addEventListener('click', loadLocations);
+
+/* ============================================================
+   WEEKLY ACTIVITY
+   ============================================================ */
+async function loadActivities(){
+  const c = $('#activityList');
+  c.innerHTML = `<div class="empty-state">Loading…</div>`;
+
+  const r = await apiFetch('/api/buildingactivity');
+  if(!r.ok){
+    c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(r.message)}</div>`;
+    return;
+  }
+
+  const list = Array.isArray(r.data) ? r.data : (r.data?.activities || []);
+  if(!list.length){
+    c.innerHTML = `<div class="empty-state">No activities yet.</div>`;
+    return;
+  }
+
+  c.innerHTML = '';
+  list.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'list-item';
+    el.dataset.id = a.id;
+
+    // "user" = using (red)  |  "produce" = producing (green)
+    const opLabel = a.op === 'user' ? 'Using' : 'Producing';
+    const opClass = a.op === 'user' ? 'badge red' : 'badge green';
+
+    el.innerHTML = `
+      <div class="list-item-info">
+        <strong>${escapeHtml(a.objectname || '—')} × ${escapeHtml(a.amount ?? 0)}</strong>
+        <small>
+          <span class="${opClass}">${opLabel}</span>
+          <span>Building ID: ${escapeHtml(a.building_id ?? '—')}</span>
+          <span>${escapeHtml((a.created_at || '').slice(0, 19))}</span>
+        </small>
+      </div>
+      <div class="list-item-actions">
+        <button class="action-btn delete delete-activity" title="Delete">
+          <i class="fas fa-trash-can"></i>
+        </button>
+      </div>`;
+    c.appendChild(el);
+  });
+}
+
+$('#activityForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#activitySubmitBtn');
+
+  const payload = {
+    buildingname: $('#actBuilding').value.trim(),
+    objectname:   $('#actObject').value.trim(),
+    op:           $('#actOp').value,               // "user" | "produce"
+    amount:       Number($('#actAmount').value),
+  };
+
+  setBtnLoading(btn, true);
+  const r = await apiFetch('/api/buildingactivity', { method: 'POST', body: payload });
+  setBtnLoading(btn, false);
+
+  if (r.ok) {
+    toast('success', 'Activity recorded', r.message);
+    $('#activityForm').reset();
+    loadActivities();
+  } else {
+    toast('error', 'Create failed', r.message);
+  }
+});
+
+$('#activityList').addEventListener('click', async (e) => {
+  const item = e.target.closest('.list-item');
+  if (!item) return;
+  const id = item.dataset.id;
+
+  if (e.target.closest('.delete-activity')) {
+    if (!confirm('Delete this activity?')) return;
+    const r = await apiFetch(`/api/buildingactivity/${id}`, { method: 'DELETE' });
+    if (r.ok) { toast('success', 'Deleted', r.message); item.remove(); }
+    else toast('error', 'Delete failed', r.message);
+  }
+});
+
+$('#refreshActivity').addEventListener('click', loadActivities);
+
+/* ============================================================
+   MODAL HELPERS
+   ============================================================ */
+function openModal(html){
+  $('#modalContent').innerHTML = html;
+  $('#modalOverlay').classList.add('active');
+}
+function closeModal(){
+  $('#modalOverlay').classList.remove('active');
+  $('#modalContent').innerHTML = '';
+}
+$('#modalOverlay').addEventListener('click', (e)=>{
+  if(e.target === $('#modalOverlay')) closeModal();
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape') closeModal();
+});
+window.closeModal = closeModal;
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(async function init(){
+  setConnectionStatus('', 'Checking API…');
+  const ping = await apiFetch('/api/user');
+  if(ping.ok){ setConnectionStatus('ok', 'Connected'); loadUsers(); }
+  else {
+    setConnectionStatus('error', 'API unreachable');
+    $('#userList').innerHTML = `<div class="empty-state">⚠️ Could not reach /api/user — ${escapeHtml(ping.message)}</div>`;
+  }
+})();
+</script>
+
+</body>
+</html>
