@@ -54,7 +54,7 @@ def index(r:Request,tk:str):
 #====================================================
 @app.post("/api/auth/login")
 def index(r:Request, username:str = Form(...) , password:str = Form(...),session:Session=Depends(get_session)):
-    u = User().get_by_username(session,username=username)
+    u = User.get_by_username(session,username=username)
     if u == None or u.password_hash != password:
         return tmp.TemplateResponse(request=r , name="401.html")
 
@@ -95,16 +95,15 @@ def user_to_dict(user: User) -> dict:
 # ============================================================
 @app.post("/api/user", status_code=201)
 def create_user(body: schemas.UserCreate, session: Session = Depends(get_session)):
-    try:
-        user = User.create(
-            session,
-            username=body.username,
-            email=body.email,
-            password=body.password,
-            role=body.role,
-        )
-    except Exception as e:
-        raise HTTPException(status_code=409, detail=str(e))
+    
+    user = User.create(
+        session,
+        username=body.username,
+        email=body.email,
+        password=body.password,
+        role=body.role,
+    )
+    
     return {"status": "success", "message": "User created successfully",
             "user": user_to_dict(user)}
 
@@ -158,7 +157,7 @@ def create_building(body: schemas.BuildingCreate,
     b = Building.create(
         session,
         name=body.name, usage=body.usage, earns=body.earns,
-        create_cost=body.create_cost, update_cost=body.update_cost,
+    
     )
     return {"status": "success", "message": "Building created successfully",
             "building": b}
@@ -304,7 +303,7 @@ def create_location(body: schemas.CityOrCountryCreate,
                     session: Session = Depends(get_session)):
     loc = CityOrCountry.create(
         session, name=body.name, type=body.type,
-        population=body.population, region=body.region,
+        population=body.population, region=body.region,owner_id=body.owner_id
     )
     return {"status": "success", "message": "Location created successfully",
             "location": loc}
@@ -475,3 +474,87 @@ def delete_building_activity(aid: int, session: Session = Depends(get_session)):
     if not BuildingActivity.delete(session, aid):
         raise HTTPException(404, "Activity not found")
     return {"status": "success", "message": "Activity deleted successfully"}
+
+
+
+
+
+# ============================================================
+# BUILDING LEVEL COST  (recipe endpoints)
+# ============================================================
+@app.post("/api/buildinglevelcost", status_code=201)
+def create_level_cost(body: schemas.BuildingLevelCostCreate,
+                      session: Session = Depends(get_session)):
+    row = BuildingLevelCost.create(
+        session,
+        buildingname=body.buildingname,
+        level=body.level,
+        objectname=body.objectname,
+        kind=body.kind,
+        amount=body.amount,
+    )
+    if not row:
+        raise HTTPException(404,
+            f"Building '{body.buildingname}' or referenced object not found, "
+            f"or level < 2")
+    return {"status": "success", "message": "Level cost saved",
+            "level_cost": dict(row)}
+
+
+@app.get("/api/buildinglevelcost")
+def list_level_costs(session: Session = Depends(get_session)):
+    return {"status": "success",
+            "level_costs": [dict(c) for c in BuildingLevelCost.get_all(session)]}
+
+
+@app.get("/api/buildinglevelcost/{rid}")
+def get_level_cost(rid: int, session: Session = Depends(get_session)):
+    c = BuildingLevelCost.get(session, rid)
+    if not c: raise HTTPException(404, "Level cost not found")
+    return {"status": "success", "level_cost": levelcost_to_dict(c)}
+
+
+@app.get("/api/buildinglevelcost/building/{bid}")
+def list_building_level_costs(bid: int, session: Session = Depends(get_session)):
+    rows = BuildingLevelCost.get_all_for_building(session, bid)
+    return {"status": "success",
+            "level_costs": [levelcost_to_dict(c) for c in rows]}
+
+
+@app.delete("/api/buildinglevelcost/{rid}")
+def delete_level_cost(rid: int, session: Session = Depends(get_session)):
+    if not BuildingLevelCost.delete(session, rid):
+        raise HTTPException(404, "Level cost not found")
+    return {"status": "success", "message": "Level cost deleted"}
+
+
+# ============================================================
+# UPGRADE  (the only way to advance a building)
+# ============================================================
+@app.post("/api/building/upgrade")
+def upgrade_building(body: schemas.UpgradeBody, session: Session = Depends(get_session)):
+    row, err = UserBuilding.upgrade(session, body.userid, body.buildingname)
+    if err:
+        raise HTTPException(400, err)
+    return {"status": "success", "message": "Building upgraded successfully",
+            "user_building": {"user_id": row.user_id,
+                              "building_id": row.building_id,
+                              "level": row.level}}
+
+
+@app.get("/api/userbuilding/{userid}")
+def get_user_buildings(userid: int, session: Session = Depends(get_session)):
+    rows = session.exec(
+        # local import to keep the file short
+        __import__("sqlmodel").select(UserBuilding)
+        .where(UserBuilding.user_id == userid)
+    ).all()
+    return {"status": "success",
+            "user_buildings": [
+                {"id": r.id, "user_id": r.user_id,
+                 "building_id": r.building_id, "level": r.level}
+                for r in rows
+            ]}
+
+
+#

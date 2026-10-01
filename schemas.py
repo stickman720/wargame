@@ -1,16 +1,13 @@
 # schemas.py
 from typing import Optional, List
-from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 
 
-# ---------- USER ----------
 class UserCreate(BaseModel):
-    username: str = Field(..., max_length=100)
+    username: str
     email: EmailStr
-    password: str = Field(..., min_length=4)
+    password: str
     role: str = "user"
-
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
@@ -19,30 +16,32 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
 
 
-# ---------- BUILDING ----------
 class BuildingCreate(BaseModel):
     name: str
     usage: str = "residential"
     earns: int = 0
-    create_cost: int = 0
-    update_cost: int = 0
-
+    max_level: int = 1
 
 class BuildingUpdate(BaseModel):
     name: Optional[str] = None
     usage: Optional[str] = None
     earns: Optional[int] = None
-    create_cost: Optional[int] = None
-    update_cost: Optional[int] = None
 
 
-# ---------- ARMY ----------
+# --- new: recipe item for a building level ---
+class BuildingLevelCostCreate(BaseModel):
+    buildingname: str
+    level: int = Field(ge=1)
+    objectname: str
+    kind: str = Field(..., pattern="^(asset|building|money)$")
+    amount: int = Field(ge=0)
+
+
 class ArmyCreate(BaseModel):
     name: str
     type: str = "infantry"
     power: int = 0
     cost: int = 0
-
 
 class ArmyUpdate(BaseModel):
     name: Optional[str] = None
@@ -51,13 +50,11 @@ class ArmyUpdate(BaseModel):
     cost: Optional[int] = None
 
 
-# ---------- ASSET ----------
 class AssetCreate(BaseModel):
     name: str
     type: str = "resource"
     quantity: int = 0
     value: int = 0
-
 
 class AssetUpdate(BaseModel):
     name: Optional[str] = None
@@ -66,13 +63,12 @@ class AssetUpdate(BaseModel):
     value: Optional[int] = None
 
 
-# ---------- CITY / COUNTRY ----------
 class CityOrCountryCreate(BaseModel):
     name: str
     type: str = "city"
     population: int = 0
+    owner_id:int
     region: Optional[str] = None
-
 
 class CityOrCountryUpdate(BaseModel):
     name: Optional[str] = None
@@ -81,21 +77,24 @@ class CityOrCountryUpdate(BaseModel):
     region: Optional[str] = None
 
 
-# ---------- INVENTORY ----------
 class InventoryUpdate(BaseModel):
     objectname: str
     newamount: int = Field(ge=0)
 
 
-# ---------- RELATION ----------
 class RelationBody(BaseModel):
     userid: int
     cityname: str
 
-# schemas.py  (only the BuildingActivityCreate block shown)
 
 class BuildingActivityCreate(BaseModel):
     buildingname: str
     objectname: str
-    op: str = Field(..., pattern="^(user|produce)$")   # "user" = using, "produce" = producing
+    op: str = Field(..., pattern="^(user|produce)$")
     amount: int = Field(ge=0)
+
+
+# --- new: upgrade request ---
+class UpgradeBody(BaseModel):
+    userid: int
+    buildingname: str

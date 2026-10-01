@@ -26,7 +26,6 @@ body{background:var(--gray-bg);min-height:100vh;padding:1.5rem;color:var(--text-
 ::-webkit-scrollbar-thumb:hover{background:var(--orange)}
 
 .dashboard{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:1.5rem}
-
 .top-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
   background:var(--white);padding:1rem 1.8rem;border-radius:var(--radius-lg);
   box-shadow:var(--shadow-sm);border-left:6px solid var(--red);border-right:6px solid var(--orange)}
@@ -80,7 +79,8 @@ body{background:var(--gray-bg);min-height:100vh;padding:1.5rem;color:var(--text-
 select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f57c00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 1.2rem center;background-size:1.2rem;cursor:pointer}
 .row-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-@media(max-width:600px){.row-2{grid-template-columns:1fr}}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+@media(max-width:600px){.row-2,.row-3{grid-template-columns:1fr}}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;
   padding:.9rem 1.8rem;border:none;border-radius:60px;font-weight:700;font-size:.9rem;
@@ -112,6 +112,7 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
   background:var(--orange-soft);color:var(--red-dark);border:1px solid rgba(245,124,0,.2)}
 .badge.green{background:#e8f5e9;color:#2e7d32;border-color:#a5d6a7}
 .badge.red{background:var(--red-soft);color:var(--red-dark);border-color:#ef9a9a}
+.badge.blue{background:#e3f2fd;color:#1565c0;border-color:#90caf9}
 
 .toast-container{position:fixed;top:1.5rem;right:1.5rem;z-index:9999;display:flex;
   flex-direction:column;gap:.6rem;max-width:380px}
@@ -130,7 +131,7 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
   backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:1.5rem}
 .modal-overlay.active{display:flex}
-.modal{background:var(--white);max-width:520px;width:100%;border-radius:var(--radius-lg);
+.modal{background:var(--white);max-width:560px;width:100%;border-radius:var(--radius-lg);
   padding:2rem;box-shadow:var(--shadow-lg);border-top:8px solid var(--orange);
   max-height:90vh;overflow-y:auto}
 .modal h3{color:var(--red-dark);margin-bottom:1.2rem;display:flex;align-items:center;gap:.6rem}
@@ -172,6 +173,7 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
   <div class="tabs">
     <button class="tab-btn active" data-tab="users"><i class="fas fa-users"></i> Users</button>
     <button class="tab-btn" data-tab="buildings"><i class="fas fa-building"></i> Buildings</button>
+    <button class="tab-btn" data-tab="recipes"><i class="fas fa-scroll"></i> Level Recipes</button>
     <button class="tab-btn" data-tab="army"><i class="fas fa-fighter-jet"></i> Army Objects</button>
     <button class="tab-btn" data-tab="assets"><i class="fas fa-coins"></i> Assets</button>
     <button class="tab-btn" data-tab="locations"><i class="fas fa-globe"></i> Cities / Countries</button>
@@ -190,16 +192,16 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
           <input type="hidden" id="userId" value="">
           <div class="form-group">
             <label><i class="fas fa-user"></i> Username</label>
-            <input type="text" class="form-control" id="userName" placeholder="e.g. john_doe" required>
+            <input type="text" class="form-control" id="userName" required>
           </div>
           <div class="form-group">
             <label><i class="fas fa-envelope"></i> Email</label>
-            <input type="email" class="form-control" id="userEmail" placeholder="john@example.com" required>
+            <input type="email" class="form-control" id="userEmail" required>
           </div>
           <div class="row-2">
             <div class="form-group">
               <label><i class="fas fa-lock"></i> Password</label>
-              <input type="password" class="form-control" id="userPassword" placeholder="••••••••">
+              <input type="password" class="form-control" id="userPassword">
             </div>
             <div class="form-group">
               <label><i class="fas fa-tag"></i> Role</label>
@@ -246,10 +248,14 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
           <i class="fas fa-plus-circle"></i>
           <h2>Add Building <span>POST /api/building</span></h2>
         </div>
+        <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem">
+          Buildings have no direct cost here — the cost to reach each level is defined
+          in the <strong>Level Recipes</strong> tab.
+        </p>
         <form id="buildingForm">
           <div class="form-group">
             <label><i class="fas fa-building"></i> Building Name</label>
-            <input type="text" class="form-control" id="buildName" placeholder="e.g. HQ Tower" required>
+            <input type="text" class="form-control" id="buildName" required>
           </div>
           <div class="row-2">
             <div class="form-group">
@@ -264,16 +270,6 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
             <div class="form-group">
               <label><i class="fas fa-dollar-sign"></i> Earns</label>
               <input type="number" class="form-control" id="buildEarns" value="500">
-            </div>
-          </div>
-          <div class="row-2">
-            <div class="form-group">
-              <label><i class="fas fa-hammer"></i> Create Cost</label>
-              <input type="number" class="form-control" id="buildCreateCost" value="1000">
-            </div>
-            <div class="form-group">
-              <label><i class="fas fa-arrow-up"></i> Update Cost</label>
-              <input type="number" class="form-control" id="buildUpdateCost" value="200">
             </div>
           </div>
           <button type="submit" class="btn btn-primary" id="buildingSubmitBtn">
@@ -297,6 +293,68 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
     </div>
   </div>
 
+  <!-- ================= LEVEL RECIPES ================= -->
+  <div id="panel-recipes" class="panel">
+    <div class="panel-grid">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-scroll"></i>
+          <h2>Add Level Recipe <span>POST /api/buildinglevelcost</span></h2>
+        </div>
+        <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem">
+          Each row is one ingredient needed to reach a given level. An ingredient can be
+          an <strong>asset</strong>, another <strong>building</strong>, or <strong>money</strong>.
+        </p>
+        <form id="recipeForm">
+          <div class="form-group">
+            <label><i class="fas fa-building"></i> Building Name</label>
+            <input type="text" class="form-control" id="recBuilding" required>
+          </div>
+          <div class="row-3">
+            <div class="form-group">
+              <label><i class="fas fa-layer-group"></i> Level</label>
+              <input type="number" min="2" class="form-control" id="recLevel" value="2" required>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-tag"></i> Kind</label>
+              <select class="form-control" id="recKind">
+                <option value="asset">asset</option>
+                <option value="building">building</option>
+                <option value="money">money</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-scale-balanced"></i> Amount</label>
+              <input type="number" min="0" class="form-control" id="recAmount" value="1" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-cube"></i> Object Name
+              <small style="text-transform:none;color:var(--text-muted);font-weight:400">(asset or building name; ignored for money)</small>
+            </label>
+            <input type="text" class="form-control" id="recObject">
+          </div>
+          <button type="submit" class="btn btn-primary" id="recipeSubmitBtn">
+            <i class="fas fa-save"></i> Save Ingredient
+          </button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-list"></i>
+          <h2>Level Recipes <span>GET /api/buildinglevelcost</span></h2>
+          <button class="action-btn" id="refreshRecipes" title="Refresh"
+                  style="margin-left:auto;width:auto;padding:0 .6rem">
+            <i class="fas fa-rotate"></i>
+          </button>
+        </div>
+        <div class="list-container" id="recipeList">
+          <div class="empty-state">Loading recipes…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= ARMY ================= -->
   <div id="panel-army" class="panel">
     <div class="panel-grid">
@@ -308,7 +366,7 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
         <form id="armyForm">
           <div class="form-group">
             <label><i class="fas fa-tag"></i> Name</label>
-            <input type="text" class="form-control" id="armyName" placeholder="e.g. Tank Battalion" required>
+            <input type="text" class="form-control" id="armyName" required>
           </div>
           <div class="row-2">
             <div class="form-group">
@@ -361,7 +419,7 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
         <form id="assetForm">
           <div class="form-group">
             <label><i class="fas fa-cube"></i> Name</label>
-            <input type="text" class="form-control" id="assetName" placeholder="e.g. Gold Reserve" required>
+            <input type="text" class="form-control" id="assetName" required>
           </div>
           <div class="row-2">
             <div class="form-group">
@@ -402,18 +460,20 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
     </div>
   </div>
 
-  <!-- ================= LOCATIONS ================= -->
+  <!-- ================= LOCATIONS (with Owner) ================= -->
   <div id="panel-locations" class="panel">
     <div class="panel-grid">
       <div class="card">
         <div class="card-header">
           <i class="fas fa-map-pin"></i>
-          <h2>Add City / Country <span>POST /api/cityorcountry</span></h2>
+          <h2 id="locFormTitle">Add City / Country <span>POST /api/cityorcountry</span></h2>
         </div>
         <form id="locationForm">
+          <input type="hidden" id="locId" value="">
           <div class="form-group">
             <label><i class="fas fa-location-dot"></i> Name</label>
-            <input type="text" class="form-control" id="locName" placeholder="e.g. New Athens" required>
+            <input type="text" class="form-control" id="locName"
+                   placeholder="e.g. New Athens" required>
           </div>
           <div class="row-2">
             <div class="form-group">
@@ -428,15 +488,31 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
               <input type="number" class="form-control" id="locPopulation" value="1000000">
             </div>
           </div>
-          <div class="form-group">
-            <label><i class="fas fa-globe"></i> Region</label>
-            <input type="text" class="form-control" id="locRegion" placeholder="e.g. Europe">
+          <div class="row-2">
+            <div class="form-group">
+              <label><i class="fas fa-globe"></i> Region</label>
+              <input type="text" class="form-control" id="locRegion" placeholder="e.g. Europe">
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-crown"></i> Owner User ID
+                <small style="text-transform:none;color:var(--text-muted);font-weight:400">(optional)</small>
+              </label>
+              <input type="number" class="form-control" id="locOwner"
+                     placeholder="Leave empty for no owner">
+            </div>
           </div>
-          <button type="submit" class="btn btn-primary" id="locationSubmitBtn">
-            <i class="fas fa-save"></i> Add Location
-          </button>
+          <div style="display:flex;gap:.6rem">
+            <button type="submit" class="btn btn-primary" id="locationSubmitBtn">
+              <i class="fas fa-save"></i> <span id="locationSubmitText">Add Location</span>
+            </button>
+            <button type="button" class="btn btn-secondary" id="locationCancelBtn"
+                    style="display:none;flex:0 0 auto;width:auto;padding:.9rem 1.2rem">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
         </form>
       </div>
+
       <div class="card">
         <div class="card-header">
           <i class="fas fa-list"></i>
@@ -464,13 +540,11 @@ select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3C
         <form id="activityForm">
           <div class="form-group">
             <label><i class="fas fa-building"></i> Building Name</label>
-            <input type="text" class="form-control" id="actBuilding"
-                   placeholder="e.g. Central Plaza" required>
+            <input type="text" class="form-control" id="actBuilding" required>
           </div>
           <div class="form-group">
             <label><i class="fas fa-cube"></i> Army Object / Asset Name</label>
-            <input type="text" class="form-control" id="actObject"
-                   placeholder="e.g. Oil Reserve / 1st Armored Division" required>
+            <input type="text" class="form-control" id="actObject" required>
           </div>
           <div class="row-2">
             <div class="form-group">
@@ -577,6 +651,7 @@ async function apiFetch(path, options = {}){
 const tabLoaders = {
   users: () => loadUsers(),
   buildings: () => loadBuildings(),
+  recipes: () => loadRecipes(),
   army: () => loadArmy(),
   assets: () => loadAssets(),
   locations: () => loadLocations(),
@@ -604,31 +679,28 @@ async function loadUsers(){
   const users = Array.isArray(res.data) ? res.data : (res.data?.users || []);
   if(!users.length){ c.innerHTML = `<div class="empty-state">No users found.</div>`; return; }
   c.innerHTML = '';
-  users.forEach(u => c.appendChild(renderUserItem(u)));
+  users.forEach(u => {
+    const id = u.id ?? u._id ?? '';
+    const el = document.createElement('div'); el.className = 'list-item'; el.dataset.id = id;
+    el.innerHTML = `
+      <div class="list-item-info">
+        <strong>${escapeHtml(u.username??'—')}</strong>
+        <small><span><i class="fas fa-envelope"></i> ${escapeHtml(u.email??'—')}</span>
+          <span class="badge">${escapeHtml(u.role??'user')}</span>
+          <span>ID: ${escapeHtml(id)}</span></small>
+      </div>
+      <div class="list-item-actions">
+        <button class="action-btn view-user"><i class="fas fa-eye"></i></button>
+        <button class="action-btn inventory-user" title="Inventory"><i class="fas fa-boxes-stacked"></i></button>
+        <button class="action-btn upgrade-user" title="Upgrade building"><i class="fas fa-arrow-up"></i></button>
+        <button class="action-btn edit-user"><i class="fas fa-pen"></i></button>
+        <button class="action-btn delete delete-user"><i class="fas fa-trash-can"></i></button>
+      </div>`;
+    c.appendChild(el);
+  });
   setConnectionStatus('ok','Connected');
 }
-function renderUserItem(user){
-  const id = user.id ?? user._id ?? user.userid ?? '';
-  const name = user.username ?? user.name ?? '—';
-  const email = user.email ?? '—';
-  const role = user.role ?? 'user';
-  const el = document.createElement('div');
-  el.className = 'list-item'; el.dataset.id = id;
-  el.innerHTML = `
-    <div class="list-item-info">
-      <strong>${escapeHtml(name)}</strong>
-      <small><span><i class="fas fa-envelope"></i> ${escapeHtml(email)}</span>
-        <span class="badge">${escapeHtml(role)}</span>
-        <span>ID: ${escapeHtml(id)}</span></small>
-    </div>
-    <div class="list-item-actions">
-      <button class="action-btn view-user" title="View"><i class="fas fa-eye"></i></button>
-      <button class="action-btn inventory-user" title="Inventory"><i class="fas fa-boxes-stacked"></i></button>
-      <button class="action-btn edit-user" title="Edit"><i class="fas fa-pen"></i></button>
-      <button class="action-btn delete delete-user" title="Delete"><i class="fas fa-trash-can"></i></button>
-    </div>`;
-  return el;
-}
+
 $('#userList').addEventListener('click', async (e)=>{
   const item = e.target.closest('.list-item'); if(!item) return;
   const id = item.dataset.id;
@@ -642,6 +714,9 @@ $('#userList').addEventListener('click', async (e)=>{
   }
   if(e.target.closest('.inventory-user')){
     openInventoryModal(id, item.querySelector('strong').textContent);
+  }
+  if(e.target.closest('.upgrade-user')){
+    openUpgradeModal(id, item.querySelector('strong').textContent);
   }
   if(e.target.closest('.edit-user')){
     const r = await apiFetch(`/api/user/${id}`);
@@ -674,8 +749,7 @@ function openInventoryModal(userId, username){
     <form id="inventoryForm">
       <div class="form-group">
         <label><i class="fas fa-tag"></i> Object Name</label>
-        <input type="text" class="form-control" id="invObjectName"
-               placeholder="e.g. 1st Armored Division / Oil Reserve" required>
+        <input type="text" class="form-control" id="invObjectName" required>
       </div>
       <div class="form-group">
         <label><i class="fas fa-scale-balanced"></i> New Amount</label>
@@ -699,6 +773,40 @@ function openInventoryModal(userId, username){
     setBtnLoading(btn, false, '<i class="fas fa-save"></i> Save Inventory');
     if(r.ok){ toast('success','Inventory updated',`${objectname} → ${newamount}`); closeModal(); }
     else toast('error','Update failed',r.message);
+  });
+}
+
+function openUpgradeModal(userId, username){
+  openModal(`
+    <h3><i class="fas fa-arrow-up"></i> Upgrade Building — ${escapeHtml(username)}</h3>
+    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem">
+      User ID: <strong>${escapeHtml(userId)}</strong> ·
+      <code>POST /api/building/upgrade</code>
+    </p>
+    <form id="upgradeForm">
+      <div class="form-group">
+        <label><i class="fas fa-building"></i> Building Name</label>
+        <input type="text" class="form-control" id="upBuilding" required>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn btn-primary" id="upSubmitBtn">
+          <i class="fas fa-arrow-up"></i> Upgrade
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>`);
+  $('#upgradeForm').addEventListener('submit', async (ev)=>{
+    ev.preventDefault();
+    const buildingname = $('#upBuilding').value.trim();
+    if(!buildingname){ toast('error','Invalid input','Building name required'); return; }
+    const btn = $('#upSubmitBtn'); setBtnLoading(btn, true);
+    const r = await apiFetch('/api/building/upgrade', {
+      method:'POST', body:{userid: Number(userId), buildingname}});
+    setBtnLoading(btn, false, '<i class="fas fa-arrow-up"></i> Upgrade');
+    if(r.ok){
+      toast('success','Upgraded', `New level: ${r.data?.user_building?.level ?? '?'}`);
+      closeModal();
+    } else toast('error','Upgrade failed', r.message);
   });
 }
 
@@ -747,10 +855,10 @@ async function loadBuildings(){
         <strong>${escapeHtml(b.name||'—')}</strong>
         <small><span class="badge">${escapeHtml(b.usage||'—')}</span>
           <span>Earns: $${escapeHtml(b.earns??0)}</span>
-          <span>Cost: $${escapeHtml(b.create_cost??b.createcost??0)}</span></small>
+          <span class="badge blue">Max Lv ${escapeHtml(b.max_level??1)}</span></small>
       </div>
       <div class="list-item-actions">
-        <button class="action-btn edit-building"><i class="fas fa-pen"></i></button>
+        <button class="action-btn edit-building" title="Edit basic info"><i class="fas fa-pen"></i></button>
         <button class="action-btn delete delete-building"><i class="fas fa-trash-can"></i></button>
       </div>`;
     c.appendChild(el);
@@ -763,8 +871,7 @@ $('#buildingForm').addEventListener('submit', async (e)=>{
     name: $('#buildName').value.trim(),
     usage: $('#buildUsage').value,
     earns: Number($('#buildEarns').value),
-    create_cost: Number($('#buildCreateCost').value),
-    update_cost: Number($('#buildUpdateCost').value),
+    max_level: 1,
   };
   setBtnLoading(btn, true);
   const r = await apiFetch('/api/building', {method:'POST', body: payload});
@@ -787,7 +894,7 @@ $('#buildingList').addEventListener('click', async (e)=>{
     if(!r.ok) return toast('error','Fetch failed', r.message);
     const b = r.data?.building || r.data || {};
     openModal(`
-      <h3><i class="fas fa-pen"></i> Edit Building</h3>
+      <h3><i class="fas fa-pen"></i> Edit Building (basic info only)</h3>
       <form id="modalBuildingForm">
         <div class="form-group"><label><i class="fas fa-building"></i> Name</label>
           <input type="text" class="form-control" id="mBName" value="${escapeHtml(b.name||'')}" required></div>
@@ -800,12 +907,9 @@ $('#buildingList').addEventListener('click', async (e)=>{
           <div class="form-group"><label><i class="fas fa-dollar-sign"></i> Earns</label>
             <input type="number" class="form-control" id="mBEarns" value="${escapeHtml(b.earns??0)}"></div>
         </div>
-        <div class="row-2">
-          <div class="form-group"><label><i class="fas fa-hammer"></i> Create Cost</label>
-            <input type="number" class="form-control" id="mBCreate" value="${escapeHtml(b.create_cost??b.createcost??0)}"></div>
-          <div class="form-group"><label><i class="fas fa-arrow-up"></i> Update Cost</label>
-            <input type="number" class="form-control" id="mBUpdate" value="${escapeHtml(b.update_cost??b.updatecost??0)}"></div>
-        </div>
+        <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:.5rem">
+          Costs are not editable here — use the <strong>Level Recipes</strong> tab.
+        </p>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -817,8 +921,6 @@ $('#buildingList').addEventListener('click', async (e)=>{
         name: $('#mBName').value.trim(),
         usage: $('#mBUsage').value,
         earns: Number($('#mBEarns').value),
-        create_cost: Number($('#mBCreate').value),
-        update_cost: Number($('#mBUpdate').value),
       };
       const r2 = await apiFetch(`/api/building/${id}`, {method:'PUT', body: payload});
       if(r2.ok){ toast('success','Updated', r2.message); closeModal(); loadBuildings(); }
@@ -827,6 +929,66 @@ $('#buildingList').addEventListener('click', async (e)=>{
   }
 });
 $('#refreshBuildings').addEventListener('click', loadBuildings);
+
+/* ============================================================
+   LEVEL RECIPES
+   ============================================================ */
+async function loadRecipes(){
+  const c = $('#recipeList'); c.innerHTML = `<div class="empty-state">Loading…</div>`;
+  const r = await apiFetch('/api/buildinglevelcost');
+  if(!r.ok){ c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  const list = Array.isArray(r.data) ? r.data : (r.data?.level_costs || []);
+  if(!list.length){ c.innerHTML = `<div class="empty-state">No recipe items yet.</div>`; return; }
+
+  const groups = {};
+  list.forEach(x => {
+    const key = `${x.building_id}::${x.level}`;
+    (groups[key] = groups[key] || []).push(x);
+  });
+
+  c.innerHTML = '';
+  Object.entries(groups).forEach(([key, items]) => {
+    const [bid, lvl] = key.split('::');
+    const el = document.createElement('div'); el.className = 'list-item';
+    el.innerHTML = `
+      <div class="list-item-info">
+        <strong>Building #${escapeHtml(bid)} → Level ${escapeHtml(lvl)}</strong>
+        <small>
+          ${items.map(i => `<span class="badge ${
+            i.kind === 'asset' ? '' :
+            i.kind === 'building' ? 'blue' : 'green'
+          }">${escapeHtml(i.kind)}: ${escapeHtml(i.objectname)} × ${escapeHtml(i.amount)}</span>`).join(' ')}
+        </small>
+      </div>`;
+    c.appendChild(el);
+  });
+}
+$('#recipeForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = $('#recipeSubmitBtn');
+  const kind = $('#recKind').value;
+  const objectname = $('#recObject').value.trim();
+
+  const payload = {
+    buildingname: $('#recBuilding').value.trim(),
+    level: Number($('#recLevel').value),
+    objectname: kind === 'money' ? 'money' : objectname,
+    kind: kind,
+    amount: Number($('#recAmount').value),
+  };
+
+  if(kind !== 'money' && !payload.objectname){
+    toast('error','Missing object','Object name is required for asset/building kinds');
+    return;
+  }
+  setBtnLoading(btn, true);
+  const r = await apiFetch('/api/buildinglevelcost', {method:'POST', body: payload});
+  setBtnLoading(btn, false);
+  if(r.ok){ toast('success','Recipe item saved', r.message);
+    $('#recipeForm').reset(); loadRecipes(); }
+  else toast('error','Save failed', r.message);
+});
+$('#refreshRecipes').addEventListener('click', loadRecipes);
 
 /* ============================================================
    ARMY
@@ -1015,24 +1177,43 @@ $('#assetList').addEventListener('click', async (e)=>{
 $('#refreshAssets').addEventListener('click', loadAssets);
 
 /* ============================================================
-   LOCATIONS
+   LOCATIONS  (with Owner)
    ============================================================ */
 async function loadLocations(){
-  const c = $('#locationList'); c.innerHTML = `<div class="empty-state">Loading…</div>`;
+  const c = $('#locationList');
+  c.innerHTML = `<div class="empty-state">Loading…</div>`;
+
   const r = await apiFetch('/api/cityorcountry');
-  if(!r.ok){ c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  if(!r.ok){
+    c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(r.message)}</div>`;
+    return;
+  }
+
   const list = Array.isArray(r.data) ? r.data : (r.data?.locations || []);
-  if(!list.length){ c.innerHTML = `<div class="empty-state">No locations.</div>`; return; }
+  if(!list.length){
+    c.innerHTML = `<div class="empty-state">No locations.</div>`;
+    return;
+  }
+
   c.innerHTML = '';
   list.forEach(l => {
     const id = l.id ?? l._id ?? '';
-    const el = document.createElement('div'); el.className = 'list-item'; el.dataset.id = id;
+    const ownerId = (l.owner_id ?? l.ownerid ?? l.owner) ?? null;
+
+    const el = document.createElement('div');
+    el.className = 'list-item';
+    el.dataset.id = id;
     el.innerHTML = `
       <div class="list-item-info">
-        <strong>${escapeHtml(l.name||'—')}</strong>
-        <small><span class="badge">${escapeHtml(l.type||'—')}</span>
-          <span>Pop: ${escapeHtml(l.population??0)}</span>
-          <span>${escapeHtml(l.region||'—')}</span></small>
+        <strong>${escapeHtml(l.name || '—')}</strong>
+        <small>
+          <span class="badge">${escapeHtml(l.type || '—')}</span>
+          <span>Pop: ${escapeHtml(l.population ?? 0)}</span>
+          <span>${escapeHtml(l.region || '—')}</span>
+          ${ownerId != null
+            ? `<span class="badge blue"><i class="fas fa-crown"></i> Owner: ${escapeHtml(ownerId)}</span>`
+            : `<span class="badge red">No owner</span>`}
+        </small>
       </div>
       <div class="list-item-actions">
         <button class="action-btn edit-location"><i class="fas fa-pen"></i></button>
@@ -1041,156 +1222,132 @@ async function loadLocations(){
     c.appendChild(el);
   });
 }
-$('#locationForm').addEventListener('submit', async (e)=>{
+
+$('#locationForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const id = $('#locId').value;
+  const isEdit = !!id;
   const btn = $('#locationSubmitBtn');
+
+  const ownerRaw = $('#locOwner').value.trim();
   const payload = {
-    name: $('#locName').value.trim(),
-    type: $('#locType').value,
+    name:       $('#locName').value.trim(),
+    type:       $('#locType').value,
     population: Number($('#locPopulation').value),
-    region: $('#locRegion').value.trim(),
+    region:     $('#locRegion').value.trim(),
+    owner_id:   ownerRaw === '' ? null : Number(ownerRaw),
   };
+
   setBtnLoading(btn, true);
-  const r = await apiFetch('/api/cityorcountry', {method:'POST', body: payload});
-  setBtnLoading(btn, false);
-  if(r.ok){ toast('success','Location created', r.message);
-    $('#locationForm').reset(); loadLocations(); }
-  else toast('error','Create failed', r.message);
+  const r = await apiFetch(
+    isEdit ? `/api/cityorcountry/${id}` : '/api/cityorcountry',
+    { method: isEdit ? 'PUT' : 'POST', body: payload }
+  );
+  setBtnLoading(btn, false, isEdit ? 'Update Location' : 'Add Location');
+
+  if(r.ok){
+    toast('success', isEdit ? 'Location updated' : 'Location created', r.message);
+    resetLocationForm();
+    loadLocations();
+  } else {
+    toast('error', isEdit ? 'Update failed' : 'Create failed', r.message);
+  }
 });
-$('#locationList').addEventListener('click', async (e)=>{
-  const item = e.target.closest('.list-item'); if(!item) return;
+
+function resetLocationForm(){
+  $('#locationForm').reset();
+  $('#locId').value = '';
+  $('#locFormTitle').innerHTML = 'Add City / Country <span>POST /api/cityorcountry</span>';
+  $('#locationSubmitText').textContent = 'Add Location';
+  $('#locationCancelBtn').style.display = 'none';
+}
+$('#locationCancelBtn').addEventListener('click', resetLocationForm);
+
+$('#locationList').addEventListener('click', async (e) => {
+  const item = e.target.closest('.list-item');
+  if(!item) return;
   const id = item.dataset.id;
+
   if(e.target.closest('.delete-location')){
     if(!confirm('Delete this location?')) return;
-    const r = await apiFetch(`/api/cityorcountry/${id}`, {method:'DELETE'});
+    const r = await apiFetch(`/api/cityorcountry/${id}`, { method:'DELETE' });
     if(r.ok){ toast('success','Deleted', r.message); item.remove(); }
     else toast('error','Delete failed', r.message);
   }
+
   if(e.target.closest('.edit-location')){
     const r = await apiFetch(`/api/cityorcountry/${id}`);
     if(!r.ok) return toast('error','Fetch failed', r.message);
     const l = r.data?.location || r.data || {};
-    openModal(`
-      <h3><i class="fas fa-pen"></i> Edit Location</h3>
-      <form id="modalLocationForm">
-        <div class="form-group"><label><i class="fas fa-location-dot"></i> Name</label>
-          <input type="text" class="form-control" id="mLName" value="${escapeHtml(l.name||'')}" required></div>
-        <div class="row-2">
-          <div class="form-group"><label><i class="fas fa-flag"></i> Type</label>
-            <select class="form-control" id="mLType">
-              <option value="city" ${l.type==='city'?'selected':''}>City</option>
-              <option value="country" ${l.type==='country'?'selected':''}>Country</option>
-            </select></div>
-          <div class="form-group"><label><i class="fas fa-users"></i> Population</label>
-            <input type="number" class="form-control" id="mLPop" value="${escapeHtml(l.population??0)}"></div>
-        </div>
-        <div class="form-group"><label><i class="fas fa-globe"></i> Region</label>
-          <input type="text" class="form-control" id="mLRegion" value="${escapeHtml(l.region||'')}"></div>
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        </div>
-      </form>`);
-    $('#modalLocationForm').addEventListener('submit', async (ev)=>{
-      ev.preventDefault();
-      const payload = {
-        name: $('#mLName').value.trim(),
-        type: $('#mLType').value,
-        population: Number($('#mLPop').value),
-        region: $('#mLRegion').value.trim(),
-      };
-      const r2 = await apiFetch(`/api/cityorcountry/${id}`, {method:'PUT', body: payload});
-      if(r2.ok){ toast('success','Updated', r2.message); closeModal(); loadLocations(); }
-      else toast('error','Update failed', r2.message);
-    });
+
+    $('#locId').value = id;
+    $('#locName').value = l.name ?? '';
+    $('#locType').value = l.type ?? 'city';
+    $('#locPopulation').value = l.population ?? 0;
+    $('#locRegion').value = l.region ?? '';
+    $('#locOwner').value = (l.owner_id ?? l.ownerid ?? l.owner) ?? '';
+    $('#locFormTitle').innerHTML = `Edit Location <span>UPDATE /api/cityorcountry/${id}</span>`;
+    $('#locationSubmitText').textContent = 'Update Location';
+    $('#locationCancelBtn').style.display = 'inline-flex';
+    $('#panel-locations').scrollIntoView({ behavior:'smooth' });
   }
 });
+
 $('#refreshLocations').addEventListener('click', loadLocations);
 
 /* ============================================================
    WEEKLY ACTIVITY
    ============================================================ */
 async function loadActivities(){
-  const c = $('#activityList');
-  c.innerHTML = `<div class="empty-state">Loading…</div>`;
-
+  const c = $('#activityList'); c.innerHTML = `<div class="empty-state">Loading…</div>`;
   const r = await apiFetch('/api/buildingactivity');
-  if(!r.ok){
-    c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(r.message)}</div>`;
-    return;
-  }
-
+  if(!r.ok){ c.innerHTML = `<div class="empty-state">⚠️ ${escapeHtml(r.message)}</div>`; return; }
   const list = Array.isArray(r.data) ? r.data : (r.data?.activities || []);
-  if(!list.length){
-    c.innerHTML = `<div class="empty-state">No activities yet.</div>`;
-    return;
-  }
-
+  if(!list.length){ c.innerHTML = `<div class="empty-state">No activities yet.</div>`; return; }
   c.innerHTML = '';
   list.forEach(a => {
-    const el = document.createElement('div');
-    el.className = 'list-item';
-    el.dataset.id = a.id;
-
-    // "user" = using (red)  |  "produce" = producing (green)
+    const el = document.createElement('div'); el.className = 'list-item'; el.dataset.id = a.id;
     const opLabel = a.op === 'user' ? 'Using' : 'Producing';
     const opClass = a.op === 'user' ? 'badge red' : 'badge green';
-
     el.innerHTML = `
       <div class="list-item-info">
-        <strong>${escapeHtml(a.objectname || '—')} × ${escapeHtml(a.amount ?? 0)}</strong>
-        <small>
-          <span class="${opClass}">${opLabel}</span>
-          <span>Building ID: ${escapeHtml(a.building_id ?? '—')}</span>
-          <span>${escapeHtml((a.created_at || '').slice(0, 19))}</span>
-        </small>
+        <strong>${escapeHtml(a.objectname||'—')} × ${escapeHtml(a.amount??0)}</strong>
+        <small><span class="${opClass}">${opLabel}</span>
+          <span>Building ID: ${escapeHtml(a.building_id??'—')}</span>
+          <span>${escapeHtml((a.created_at||'').slice(0,19))}</span></small>
       </div>
       <div class="list-item-actions">
-        <button class="action-btn delete delete-activity" title="Delete">
-          <i class="fas fa-trash-can"></i>
-        </button>
+        <button class="action-btn delete delete-activity"><i class="fas fa-trash-can"></i></button>
       </div>`;
     c.appendChild(el);
   });
 }
-
-$('#activityForm').addEventListener('submit', async (e) => {
+$('#activityForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const btn = $('#activitySubmitBtn');
-
   const payload = {
     buildingname: $('#actBuilding').value.trim(),
     objectname:   $('#actObject').value.trim(),
-    op:           $('#actOp').value,               // "user" | "produce"
+    op:           $('#actOp').value,
     amount:       Number($('#actAmount').value),
   };
-
   setBtnLoading(btn, true);
-  const r = await apiFetch('/api/buildingactivity', { method: 'POST', body: payload });
+  const r = await apiFetch('/api/buildingactivity', {method:'POST', body: payload});
   setBtnLoading(btn, false);
-
-  if (r.ok) {
-    toast('success', 'Activity recorded', r.message);
-    $('#activityForm').reset();
-    loadActivities();
-  } else {
-    toast('error', 'Create failed', r.message);
-  }
+  if(r.ok){ toast('success','Activity recorded', r.message);
+    $('#activityForm').reset(); loadActivities(); }
+  else toast('error','Create failed', r.message);
 });
-
-$('#activityList').addEventListener('click', async (e) => {
-  const item = e.target.closest('.list-item');
-  if (!item) return;
+$('#activityList').addEventListener('click', async (e)=>{
+  const item = e.target.closest('.list-item'); if(!item) return;
   const id = item.dataset.id;
-
-  if (e.target.closest('.delete-activity')) {
-    if (!confirm('Delete this activity?')) return;
-    const r = await apiFetch(`/api/buildingactivity/${id}`, { method: 'DELETE' });
-    if (r.ok) { toast('success', 'Deleted', r.message); item.remove(); }
-    else toast('error', 'Delete failed', r.message);
+  if(e.target.closest('.delete-activity')){
+    if(!confirm('Delete this activity?')) return;
+    const r = await apiFetch(`/api/buildingactivity/${id}`, {method:'DELETE'});
+    if(r.ok){ toast('success','Deleted', r.message); item.remove(); }
+    else toast('error','Delete failed', r.message);
   }
 });
-
 $('#refreshActivity').addEventListener('click', loadActivities);
 
 /* ============================================================
