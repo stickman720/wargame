@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Panel · Commander</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+:root{
+  --dark:#0d2a4a; --dark-2:#153b66;
+  --sky:#4fc3f7; --sky-light:#b3e5fc; --sky-soft:#e6f4fd;
+  --white:#ffffff; --off-white:#f5fafd; --gray-bg:#eef6fb;
+  --gray-border:#cfe5f3;
+  --text-dark:#0d2a4a; --text-muted:#5b7691;
+  --shadow-sm:0 4px 12px rgba(13,42,74,.06);
+  --shadow-md:0 12px 28px rgba(13,42,74,.08),0 2px 8px rgba(79,195,247,.08);
+  --shadow-lg:0 20px 40px -12px rgba(13,42,74,.25);
+  --radius-lg:24px; --transition:all .2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,system-ui,sans-serif}
+body{background:var(--gray-bg);min-height:100vh;padding:1.5rem;color:var(--text-dark);
+  background-image:radial-gradient(circle at 10% 20%,rgba(79,195,247,.06) 0,transparent 30%),
+                   radial-gradient(circle at 90% 80%,rgba(13,42,74,.05) 0,transparent 40%);}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--gray-bg)}
+::-webkit-scrollbar-thumb{background:var(--sky);border-radius:20px}
+::-webkit-scrollbar-thumb:hover{background:var(--dark-2)}
+
+.panel{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:1.5rem}
+
+/* ---------- TOP BAR ---------- */
+.top-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  background:var(--white);padding:1rem 1.8rem;border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);border-left:6px solid var(--dark);border-right:6px solid var(--sky)}
+.brand{display:flex;align-items:center;gap:.8rem}
+.brand-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--dark),var(--sky));
+  border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;
+  font-size:1.6rem;box-shadow:0 8px 16px -4px rgba(13,42,74,.35)}
+.brand h1{font-size:1.4rem;font-weight:700;color:var(--dark)}
+.brand h1 span{color:var(--sky)}
+.brand small{display:block;font-size:.7rem;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase}
+
+.user-chip{display:flex;align-items:center;gap:.8rem;padding:.5rem 1.1rem;
+  background:var(--sky-soft);border:1px solid rgba(79,195,247,.4);border-radius:60px;
+  font-weight:600;font-size:.85rem;color:var(--dark)}
+.user-chip i{color:var(--sky)}
+.user-chip .role{font-size:.7rem;background:var(--dark);color:#fff;
+  padding:.15rem .55rem;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ---------- TABS ---------- */
+.tabs{display:flex;flex-wrap:wrap;gap:.6rem;background:var(--white);padding:.6rem;
+  border-radius:60px;box-shadow:var(--shadow-sm)}
+.tab-btn{background:transparent;border:none;padding:.7rem 1.5rem;border-radius:60px;
+  font-weight:600;font-size:.9rem;color:var(--text-muted);cursor:pointer;transition:var(--transition);
+  display:flex;align-items:center;gap:.5rem;white-space:nowrap}
+.tab-btn:hover{background:var(--sky-soft);color:var(--dark)}
+.tab-btn.active{background:linear-gradient(145deg,var(--dark),var(--sky));color:#fff;
+  box-shadow:0 8px 16px -6px rgba(13,42,74,.4)}
+
+/* ---------- VIEWS ---------- */
+.view{display:none;animation:fadeIn .25s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.grid-2{display:grid;grid-template-columns:1fr 1.2fr;gap:1.5rem}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+
+.card{background:var(--white);border-radius:var(--radius-lg);padding:1.8rem;
+  box-shadow:var(--shadow-md);border:1px solid rgba(79,195,247,.18)}
+.card-header{display:flex;align-items:center;gap:.8rem;margin-bottom:1.4rem;
+  border-bottom:2px dashed var(--sky-light);padding-bottom:.9rem}
+.card-header i{font-size:1.5rem;color:var(--sky);background:var(--sky-soft);
+  padding:.55rem;border-radius:14px}
+.card-header h2{font-size:1.15rem;font-weight:700;color:var(--dark)}
+.card-header h2 span{font-weight:400;color:var(--text-muted);font-size:.8rem;display:block;margin-top:.15rem}
+
+/* ---------- FORM CONTROLS ---------- */
+.form-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem}
+.form-group label{display:flex;align-items:center;gap:.4rem;
+  font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+  color:var(--dark);margin-left:.3rem}
+.form-group label i{color:var(--sky);width:1rem}
+.form-control{width:100%;padding:.8rem 1.1rem;border:2px solid var(--gray-border);
+  border-radius:60px;font-size:.95rem;background:var(--off-white);
+  transition:var(--transition);outline:none;color:var(--text-dark);font-weight:500}
+.form-control:focus{border-color:var(--sky);background:var(--white);
+  box-shadow:0 0 0 4px rgba(79,195,247,.18)}
+.form-control::placeholder{color:#9bb3c6;font-weight:400}
+select.form-control{appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234fc3f7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 1.1rem center;
+  background-size:1.1rem;cursor:pointer}
+textarea.form-control{border-radius:18px;resize:vertical}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+@media(max-width:600px){.row-2{grid-template-columns:1fr}}
+
+/* ---------- PROFILE ---------- */
+.profile-row{display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 0;border-bottom:1px dashed var(--sky-light)}
+.profile-row:last-child{border-bottom:none}
+.profile-row .label{font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--text-muted);font-weight:700}
+.profile-row .value{font-size:.95rem;font-weight:600;color:var(--dark)}
+.avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--dark),var(--sky));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;
+  margin:0 auto 1rem;box-shadow:0 12px 24px -8px rgba(13,42,74,.4)}
+
+/* ---------- LISTS ---------- */
+.list-container{max-height:520px;overflow-y:auto;padding-right:.3rem}
+.item{display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 1rem;background:var(--off-white);border-radius:14px;margin-bottom:.6rem;
+  border-left:5px solid var(--sky);transition:var(--transition);gap:.6rem}
+.item:hover{background:var(--white);box-shadow:0 6px 14px rgba(79,195,247,.15);
+  border-left-color:var(--dark)}
+.item-info{display:flex;flex-direction:column;gap:.2rem;flex:1;min-width:0}
+.item-info strong{font-size:.95rem;color:var(--text-dark)}
+.item-info small{font-size:.75rem;color:var(--text-muted);display:flex;gap:.8rem;flex-wrap:wrap}
+
+/* ---------- BUILDING CARD ---------- */
+.building-card{background:var(--white);border-radius:18px;padding:1.2rem;
+  border:1px solid rgba(79,195,247,.2);box-shadow:var(--shadow-sm);
+  transition:var(--transition);display:flex;flex-direction:column;gap:.7rem}
+.building-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--sky)}
+.building-card h3{color:var(--dark);font-size:1.05rem;font-weight:700}
+.building-card .level{font-size:.75rem;background:var(--sky-soft);color:var(--dark);
+  padding:.2rem .7rem;border-radius:30px;font-weight:700;display:inline-block;
+  border:1px solid rgba(79,195,247,.4);align-self:flex-start}
+.building-card .stats{display:flex;gap:1rem;font-size:.8rem;color:var(--text-muted);flex-wrap:wrap}
+.building-card .stats strong{color:var(--dark)}
+.recipe{margin-top:.4rem}
+.recipe h4{font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--text-muted);margin-bottom:.4rem;font-weight:800}
+.recipe-list{display:flex;flex-wrap:wrap;gap:.35rem}
+.recipe-chip{font-size:.7rem;padding:.2rem .55rem;border-radius:30px;font-weight:700;
+  background:var(--sky-soft);color:var(--dark);border:1px solid rgba(79,195,247,.35)}
+.recipe-chip.building{background:#e0eefb;color:#134d8a;border-color:#a9c8eb}
+.recipe-chip.money{background:#e3f6ee;color:#1b6b4a;border-color:#a7e0c6}
+
+.qty-badge{font-size:1.6rem;font-weight:900;color:var(--dark);line-height:1}
+.qty-row{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem}
+
+/* ---------- ATTACK ROWS ---------- */
+.attack-row{display:grid;grid-template-columns:1fr 100px 40px;gap:.5rem;
+  margin-bottom:.5rem;align-items:center}
+.attack-row input{border:2px solid var(--gray-border);border-radius:60px;
+  padding:.7rem 1rem;font-size:.9rem;background:var(--off-white);outline:none;
+  transition:var(--transition);font-family:inherit}
+.attack-row input:focus{border-color:var(--sky);background:var(--white);
+  box-shadow:0 0 0 3px rgba(79,195,247,.15)}
+.attack-row .remove-row{background:#fdeaea;color:#8b1d1d;border:none;
+  border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:.9rem;
+  display:flex;align-items:center;justify-content:center;transition:var(--transition)}
+.attack-row .remove-row:hover{transform:scale(1.1)}
+
+/* ---------- BUTTONS ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+  padding:.7rem 1.2rem;border:none;border-radius:60px;font-weight:700;font-size:.85rem;
+  cursor:pointer;transition:var(--transition);text-transform:uppercase;letter-spacing:.4px;
+  width:100%}
+.btn-primary{background:linear-gradient(145deg,var(--dark),var(--sky));color:#fff;
+  box-shadow:0 8px 16px -6px rgba(13,42,74,.35)}
+.btn-primary:hover{background:linear-gradient(145deg,var(--dark-2),var(--sky));
+  transform:translateY(-2px);box-shadow:0 14px 22px -8px rgba(13,42,74,.5)}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.btn-outline{background:var(--white);color:var(--dark);border:2px solid var(--sky)}
+.btn-outline:hover{background:var(--sky-soft);border-color:var(--dark-2)}
+.btn-outline:disabled,
+.btn-outline[disabled]{opacity:.6;cursor:not-allowed;background:#f5f7fa;
+  border-color:#cfe5f3;color:var(--text-muted)}
+.btn-danger{background:linear-gradient(145deg,#8b1d1d,#d32f2f);color:#fff;
+  box-shadow:0 8px 16px -6px rgba(139,29,29,.35)}
+.btn-danger:hover{transform:translateY(-2px);box-shadow:0 14px 22px -8px rgba(139,29,29,.5)}
+.btn-sm{padding:.45rem 1rem;font-size:.75rem;width:auto}
+
+/* ---------- BADGES ---------- */
+.badge{display:inline-block;padding:.15rem .6rem;border-radius:40px;font-size:.7rem;
+  font-weight:700;background:var(--sky-soft);color:var(--dark);
+  border:1px solid rgba(79,195,247,.35)}
+.badge.green{background:#e3f6ee;color:#1b6b4a;border-color:#a7e0c6}
+.badge.red{background:#fdeaea;color:#8b1d1d;border-color:#f3b7b7}
+.badge.blue{background:#e0eefb;color:#134d8a;border-color:#a9c8eb}
+
+/* ---------- TOAST ---------- */
+.toast-container{position:fixed;top:1.5rem;right:1.5rem;z-index:9999;display:flex;
+  flex-direction:column;gap:.6rem;max-width:380px}
+.toast{background:var(--white);border-radius:14px;padding:1rem 1.2rem;box-shadow:var(--shadow-lg);
+  border-left:6px solid var(--sky);display:flex;align-items:flex-start;gap:.8rem;
+  animation:slideIn .3s ease;font-size:.9rem}
+.toast.success{border-left-color:#1b6b4a}
+.toast.error{border-left-color:#8b1d1d}
+.toast i{font-size:1.2rem;flex-shrink:0;margin-top:.1rem}
+.toast.success i{color:#1b6b4a}
+.toast.error i{color:#8b1d1d}
+.toast.info i{color:var(--sky)}
+.toast-content strong{display:block;margin-bottom:.2rem;color:var(--dark)}
+.toast-content small{color:var(--text-muted);font-size:.8rem}
+@keyframes slideIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+
+/* ---------- EMPTY / LOADING ---------- */
+.empty{text-align:center;padding:1.5rem;color:var(--text-muted);font-style:italic;
+  background:var(--off-white);border-radius:14px;font-size:.9rem}
+.spinner{display:inline-block;width:16px;height:16px;border:3px solid rgba(255,255,255,.35);
+  border-radius:50%;border-top-color:#fff;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:600px){
+  body{padding:1rem}
+  .top-bar{flex-direction:column;align-items:flex-start;gap:.8rem}
+  .tabs{overflow-x:auto;flex-wrap:nowrap;padding:.5rem}
+  .tab-btn{padding:.6rem 1rem;font-size:.8rem}
+  .card{padding:1.3rem}
+  .attack-row{grid-template-columns:1fr 80px 36px}
+}
+</style>
+</head>
+<body>
+
+<div class="panel">
+
+  <!-- ============ TOP BAR ============ -->
+  <div class="top-bar">
+    <div class="brand">
+      <div class="brand-icon"><i class="fas fa-rocket"></i></div>
+      <div>
+        <h1>COMMANDER<span>PANEL</span></h1>
+        <small>your empire</small>
+      </div>
+    </div>
+    <div class="user-chip">
+      <i class="fas fa-user-astronaut"></i>
+      <span id="userName">—</span>
+      <span class="role" id="userRole">user</span>
+    </div>
+  </div>
+
+  <!-- ============ TABS ============ -->
+  <div class="tabs">
+    <button class="tab-btn active" data-view="profile"><i class="fas fa-id-card"></i> Profile</button>
+    <button class="tab-btn" data-view="inventory"><i class="fas fa-boxes-stacked"></i> Inventory</button>
+    <button class="tab-btn" data-view="buildings"><i class="fas fa-building"></i> Buildings</button>
+    <button class="tab-btn" data-view="available"><i class="fas fa-plus-circle"></i> Build New</button>
+    <button class="tab-btn" data-view="transport"><i class="fas fa-truck-fast"></i> Transport</button>
+    <button class="tab-btn" data-view="attack"><i class="fas fa-crosshairs"></i> Attack</button>
+    <button class="tab-btn" data-view="locations"><i class="fas fa-globe"></i> Locations</button>
+    <button class="tab-btn" data-view="activity"><i class="fas fa-calendar-week"></i> Activity</button>
+  </div>
+
+  <!-- ============ PROFILE ============ -->
+  <div id="view-profile" class="view active">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-id-card"></i>
+          <h2>My Profile <span>GET /api/me/profile</span></h2>
+        </div>
+        <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
+        <div id="profileBox"><div class="empty">Loading…</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-chart-simple"></i>
+          <h2>Summary <span>quick stats</span></h2>
+        </div>
+        <div id="summaryBox" class="grid-3"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ INVENTORY ============ -->
+  <div id="view-inventory" class="view">
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-boxes-stacked"></i>
+        <h2>My Inventory <span>GET /api/me/inventory</span></h2>
+        <button class="btn btn-outline btn-sm" id="refreshInv" style="margin-left:auto">
+          <i class="fas fa-rotate"></i> Refresh
+        </button>
+      </div>
+      <div class="list-container" id="inventoryList">
+        <div class="empty">Loading inventory…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MY BUILDINGS ============ -->
+  <div id="view-buildings" class="view">
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-building"></i>
+        <h2>My Buildings <span>GET /api/me/buildings</span></h2>
+        <button class="btn btn-outline btn-sm" id="refreshBuildings" style="margin-left:auto">
+          <i class="fas fa-rotate"></i> Refresh
+        </button>
+      </div>
+      <div id="buildingsGrid" class="grid-3"><div class="empty">Loading buildings…</div></div>
+    </div>
+  </div>
+
+  <!-- ============ BUILD NEW ============ -->
+  <div id="view-available" class="view">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-hammer"></i>
+          <h2>Add New Building <span>POST /api/me/buildings/create</span></h2>
+        </div>
+        <form id="newBuildingForm">
+          <div class="form-group">
+            <label><i class="fas fa-building"></i> Building Name</label>
+            <input type="text" class="form-control" id="nbName"
+                   placeholder="e.g. Iron Mine" required>
+          </div>
+          <div class="row-2">
+            <div class="form-group">
+              <label><i class="fas fa-chart-pie"></i> Usage</label>
+              <select class="form-control" id="nbUsage">
+                <option value="residential">Residential</option>
+                <option value="commercial">Commercial</option>
+                <option value="industrial">Industrial</option>
+                <option value="military">Military</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-dollar-sign"></i> Earns</label>
+              <input type="number" class="form-control" id="nbEarns" value="100" min="0">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="nbSubmitBtn">
+            <i class="fas fa-plus"></i> Add Building
+          </button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-list"></i>
+          <h2>Available to Build <span>GET /api/me/buildings/available</span></h2>
+          <button class="btn btn-outline btn-sm" id="refreshAvailable" style="margin-left:auto">
+            <i class="fas fa-rotate"></i> Refresh
+          </button>
+        </div>
+        <div id="availableGrid" class="grid-3">
+          <div class="empty">Loading available buildings…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TRANSPORT ============ -->
+  <div id="view-transport" class="view">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-paper-plane"></i>
+          <h2>Send Army / Assets <span>POST /api/me/transport</span></h2>
+        </div>
+        <form id="transportForm">
+          <div class="form-group">
+            <label><i class="fas fa-user"></i> Recipient Username or Email</label>
+            <input type="text" class="form-control" id="tpTo"
+                   placeholder="e.g. mira_kovacs" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-cube"></i> Object Name (army or asset)</label>
+            <input type="text" class="form-control" id="tpObject"
+                   placeholder="e.g. 1st Armored Division / Oil Reserve" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-scale-balanced"></i> Amount</label>
+            <input type="number" min="1" class="form-control" id="tpAmount" value="1" required>
+          </div>
+          <button type="submit" class="btn btn-primary" id="tpSubmitBtn">
+            <i class="fas fa-paper-plane"></i> Send
+          </button>
+        </form>
+
+        <div style="margin-top:1rem;padding:.9rem;background:var(--sky-soft);
+                    border-radius:14px;font-size:.8rem;color:var(--text-muted);line-height:1.5">
+          <i class="fas fa-info-circle" style="color:var(--sky)"></i>
+          Only objects you currently own can be sent. The amount is immediately
+          deducted from your inventory and added to the recipient's.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-boxes-stacked"></i>
+          <h2>Your Inventory <span>GET /api/me/inventory</span></h2>
+          <button class="btn btn-outline btn-sm" id="refreshTransportInv" style="margin-left:auto">
+            <i class="fas fa-rotate"></i> Refresh
+          </button>
+        </div>
+        <div class="list-container" id="transportInvList">
+          <div class="empty">Loading inventory…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ATTACK ============ -->
+  <div id="view-attack" class="view">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-crosshairs"></i>
+          <h2>Plan an Attack <span>POST /api/me/attack</span></h2>
+        </div>
+
+        <form id="attackForm">
+          <div class="form-group">
+            <label><i class="fas fa-user-ninja"></i> Target Username or Email</label>
+            <input type="text" class="form-control" id="atTarget"
+                   placeholder="e.g. mira_kovacs" required>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fas fa-scroll"></i> Role Message
+              <small style="text-transform:none;color:var(--text-muted);font-weight:400">(your battle cry)</small>
+            </label>
+            <textarea class="form-control" id="atRole" rows="3"
+                      placeholder="e.g. For the glory of House Carter!"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label style="justify-content:space-between;display:flex;align-items:center">
+              <span><i class="fas fa-fighter-jet"></i> Army Objects</span>
+              <button type="button" class="btn btn-outline btn-sm" id="atAddRow" style="width:auto">
+                <i class="fas fa-plus"></i> Add Row
+              </button>
+            </label>
+            <div id="atUnits"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="atSubmitBtn">
+            <i class="fas fa-paper-plane"></i> Submit Attack
+          </button>
+        </form>
+
+        <div style="margin-top:1rem;padding:.9rem;background:var(--sky-soft);
+                    border-radius:14px;font-size:.8rem;color:var(--text-muted);line-height:1.5">
+          <i class="fas fa-info-circle" style="color:var(--sky)"></i>
+          Each row is one army object you're sending. Your attack will be reviewed
+          by an admin before it resolves. Only army objects can be sent.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-fighter-jet"></i>
+          <h2>Your Army <span>quick pick</span></h2>
+          <button class="btn btn-outline btn-sm" id="refreshAttackInv" style="margin-left:auto">
+            <i class="fas fa-rotate"></i> Refresh
+          </button>
+        </div>
+        <div class="list-container" id="attackInvList">
+          <div class="empty">Loading army…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LOCATIONS ============ -->
+  <div id="view-locations" class="view">
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-globe"></i>
+        <h2>My Locations <span>GET /api/me/locations</span></h2>
+        <button class="btn btn-outline btn-sm" id="refreshLocations" style="margin-left:auto">
+          <i class="fas fa-rotate"></i> Refresh
+        </button>
+      </div>
+      <div class="list-container" id="locationsList">
+        <div class="empty">Loading locations…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ACTIVITY ============ -->
+  <div id="view-activity" class="view">
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-calendar-week"></i>
+        <h2>Building Activity <span>GET /api/me/activity</span></h2>
+        <button class="btn btn-outline btn-sm" id="refreshActivity" style="margin-left:auto">
+          <i class="fas fa-rotate"></i> Refresh
+        </button>
+      </div>
+      <div class="list-container" id="activityList">
+        <div class="empty">Loading activity…</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const API_BASE = '';
+const params = new URLSearchParams(window.location.search);
+const USER_ID = "{{ user_id or '' }}" ||
+                params.get('user') || params.get('uid') || params.get('id');
+
+if (!USER_ID) {
+  document.body.innerHTML = `<div style="max-width:520px;margin:6rem auto;padding:2rem;
+    background:#fff;border-radius:24px;box-shadow:0 20px 40px -12px rgba(13,42,74,.25);
+    text-align:center;color:#0d2a4a;">
+    <i class="fas fa-lock" style="font-size:2.5rem;color:#4fc3f7"></i>
+    <h2 style="margin:1rem 0 .5rem">Login required</h2>
+    <p style="color:#5b7691">Please log in at the <a href="/">login page</a>.</p>
+  </div>`;
+  throw new Error("No user id");
+}
+
+const $ = (s, c = document) => c.querySelector(s);
+const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+
+function escapeHtml(t){
+  if(t==null) return '';
+  return String(t).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function toast(type, title, message, timeout = 3500){
+  const icons = {success:'fa-circle-check',error:'fa-circle-exclamation',info:'fa-circle-info'};
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i>
+    <div class="toast-content"><strong>${escapeHtml(title)}</strong>
+    <small>${escapeHtml(message)}</small></div>`;
+  $('#toastContainer').appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(100%)';
+    el.style.transition='all .3s ease'; setTimeout(()=>el.remove(),300); }, timeout);
+}
+function setBtnLoading(btn, loading, originalHtml){
+  if(loading){ btn.disabled = true; btn._html = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner"></span>`; }
+  else { btn.disabled = false;
+    if(originalHtml) btn.innerHTML = originalHtml;
+    else if(btn._html) btn.innerHTML = btn._html; }
+}
+
+async function apiFetch(path, options = {}){
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-Id': USER_ID,
+      ...(options.headers || {}),
+    },
+    ...options,
+  };
+  if(config.body && typeof config.body === 'object') config.body = JSON.stringify(config.body);
+  try {
+    const res = await fetch(API_BASE + path, config);
+    let data = null; const text = await res.text();
+    if(text){ try{ data = JSON.parse(text); }catch{ data = {raw:text}; } }
+    let message = '';
+    if(data){
+      message = data.message || data.error || data.detail || data.msg || '';
+      if(!message && typeof data === 'string') message = data;
+      if(!message && data.detail && typeof data.detail === 'object'){
+        message = data.detail.message || '';
+      }
+    }
+    if(!message) message = res.statusText || 'Request completed';
+    return { ok: res.ok, status: res.status, data, message };
+  } catch(err){
+    return { ok:false, status:0, data:null, message: err.message || 'Network error' };
+  }
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+const viewLoaders = {
+  profile:   () => loadProfile(),
+  inventory: () => loadInventory(),
+  buildings: () => loadMyBuildings(),
+  available: () => loadAvailable(),
+  transport: () => loadTransport(),
+  attack:    () => loadAttack(),
+  locations: () => loadLocations(),
+  activity:  () => loadActivity(),
+};
+$$('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', ()=>{
+    $$('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const v = btn.dataset.view;
+    $$('.view').forEach(p => p.classList.remove('active'));
+    $(`#view-${v}`).classList.add('active');
+    if(viewLoaders[v]) viewLoaders[v]();
+  });
+});
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+async function loadProfile(){
+  const box = $('#profileBox');
+  box.innerHTML = `<div class="empty">Loading…</div>`;
+  const r = await apiFetch('/api/me/profile');
+  if(!r.ok){ box.innerHTML = `<div class="empty">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  const u = r.data?.user || {};
+  $('#userName').textContent = u.username ?? '—';
+  $('#userRole').textContent = u.role ?? 'user';
+  box.innerHTML = `
+    <div class="profile-row"><span class="label">Username</span>
+      <span class="value">${escapeHtml(u.username ?? '—')}</span></div>
+    <div class="profile-row"><span class="label">Email</span>
+      <span class="value">${escapeHtml(u.email ?? '—')}</span></div>
+    <div class="profile-row"><span class="label">Role</span>
+      <span class="value"><span class="badge blue">${escapeHtml(u.role ?? 'user')}</span></span></div>
+    <div class="profile-row"><span class="label">User ID</span>
+      <span class="value">${escapeHtml(u.id ?? '—')}</span></div>
+    <div class="profile-row"><span class="label">Joined</span>
+      <span class="value">${escapeHtml((u.created_at||'').slice(0,10) || '—')}</span></div>`;
+  loadSummary();
+}
+async function loadSummary(){
+  const box = $('#summaryBox');
+  box.innerHTML = `<div class="empty">Loading…</div>`;
+  const [inv, bld, loc] = await Promise.all([
+    apiFetch('/api/me/inventory'),
+    apiFetch('/api/me/buildings'),
+    apiFetch('/api/me/locations'),
+  ]);
+  const invCount = inv.ok ? (inv.data?.inventory || []).length : 0;
+  const bldRows = bld.ok ? (bld.data?.buildings || []) : [];
+  const totalBuildings = bldRows.reduce((s, b) => s + (b.amount ?? 1), 0);
+  const locCount = loc.ok ? (loc.data?.locations || []).length : 0;
+  box.innerHTML = `
+    <div class="building-card"><h3>${invCount}</h3>
+      <div class="stats"><span>Inventory items</span></div></div>
+    <div class="building-card"><h3>${totalBuildings}</h3>
+      <div class="stats"><span>Buildings owned</span></div></div>
+    <div class="building-card"><h3>${locCount}</h3>
+      <div class="stats"><span>Locations owned</span></div></div>`;
+}
+
+/* ============================================================
+   INVENTORY
+   ============================================================ */
+async function loadInventory(){
+  const c = $('#inventoryList');
+  c.innerHTML = `<div class="empty">Loading…</div>`;
+  const r = await apiFetch('/api/me/inventory');
+  if(!r.ok){ c.innerHTML = `<div class="empty">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  const items = r.data?.inventory || [];
+  if(!items.length){ c.innerHTML = `<div class="empty">Your inventory is empty.</div>`; return; }
+
+  c.innerHTML = '';
+  items.forEach(it => {
+    const el = document.createElement('div');
+    el.className = 'item';
+    const kindBadge = it.kind === 'army'
+      ? `<span class="badge blue">army · ${escapeHtml(it.type || '—')}</span>`
+      : `<span class="badge">asset · ${escapeHtml(it.type || '—')}</span>`;
+    const extra = it.kind === 'army'
+      ? `<span>Power: ${escapeHtml(it.power ?? 0)}</span>`
+      : `<span>Value: $${escapeHtml(it.value ?? 0)}</span>`;
+    el.innerHTML = `
+      <div class="item-info">
+        <strong>${escapeHtml(it.name || '—')}</strong>
+        <small>${kindBadge}${extra}</small>
+      </div>
+      <div style="font-size:1.4rem;font-weight:900;color:var(--dark)">
+        ×${escapeHtml(it.amount ?? 0)}
+      </div>`;
+    c.appendChild(el);
+  });
+}
+$('#refreshInv').addEventListener('click', loadInventory);
+
+/* ============================================================
+   MY BUILDINGS
+   ============================================================ */
+async function loadMyBuildings(){
+  const g = $('#buildingsGrid');
+  g.innerHTML = `<div class="empty">Loading…</div>`;
+  const r = await apiFetch('/api/me/buildings');
+  if(!r.ok){ g.innerHTML = `<div class="empty">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  const list = r.data?.buildings || [];
+  if(!list.length){
+    g.innerHTML = `<div class="empty">You own no buildings yet.<br>
+      Go to <strong>Build New</strong> to add one.</div>`;
+    return;
+  }
+  g.innerHTML = '';
+  list.forEach(b => g.appendChild(renderOwnedBuildingCard(b)));
+}
+
+function renderOwnedBuildingCard(b){
+  const el = document.createElement('div');
+  el.className = 'building-card';
+  const next = b.next_level;
+  const recipe = b.next_recipe || [];
+  const qty = b.amount ?? 1;
+
+  const recipeHtml = recipe.length
+    ? `<div class="recipe"><h4>Recipe for Lv ${escapeHtml(next)}</h4>
+       <div class="recipe-list">${recipe.map(r => `
+         <span class="recipe-chip ${escapeHtml(r.kind)}">
+           ${escapeHtml(r.kind)}: ${escapeHtml(r.objectname)} × ${escapeHtml(r.amount)}
+         </span>`).join('')}</div></div>`
+    : `<div class="recipe"><h4>Max level reached</h4></div>`;
+
+  el.innerHTML = `
+    <div class="qty-row">
+      <h3>${escapeHtml(b.name)}</h3>
+      <span class="qty-badge" title="${escapeHtml(qty)} copies">×${escapeHtml(qty)}</span>
+    </div>
+    <span class="level">Level ${escapeHtml(b.current_level)} / ${escapeHtml(b.max_level)}</span>
+    <div class="stats">
+      <span><strong>${escapeHtml(b.usage)}</strong></span>
+      <span>Earns: <strong>$${escapeHtml(b.earns)}</strong> each</span>
+    </div>
+    ${recipeHtml}
+    ${next ? `
+      <button class="btn btn-primary upgrade-btn" data-id="${escapeHtml(b.id)}">
+        <i class="fas fa-arrow-up"></i> Upgrade all ${escapeHtml(qty)} to Lv ${escapeHtml(next)}
+      </button>` : ''}
+  `;
+  return el;
+}
+
+$('#buildingsGrid').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.upgrade-btn');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  if(!confirm('Upgrade ALL copies of this building?')) return;
+
+  setBtnLoading(btn, true);
+  const r = await apiFetch(`/api/me/buildings/${id}/upgrade`, {method:'POST'});
+  setBtnLoading(btn, false);
+
+  if(r.ok){
+    toast('success','Upgraded',
+      `${r.data?.building?.name} → Lv ${r.data?.building?.current_level} (×${r.data?.building?.amount})`);
+    loadMyBuildings();
+  } else {
+    const missing = r.data?.missing || r.data?.detail?.missing;
+    let extra = '';
+    if (Array.isArray(missing) && missing.length) {
+      extra = ' — ' + missing.map(m => {
+        if (m.kind === 'building')
+          return `${m.name} (Lv ${m.have_level} → need ${m.need_level})`;
+        return `${m.name} ${m.have}/${m.need}`;
+      }).join(', ');
+    }
+    toast('error','Upgrade failed', (r.message || 'Requirements not met') + extra);
+  }
+});
+$('#refreshBuildings').addEventListener('click', loadMyBuildings);
+
+/* ============================================================
+   AVAILABLE BUILDINGS
+   ============================================================ */
+async function loadAvailable(){
+  const g = $('#availableGrid');
+  g.innerHTML = `<div class="empty">Loading…</div>`;
+
+  const ownedR = await apiFetch('/api/me/buildings');
+  const ownedMap = {};
+  if (ownedR.ok) {
+    (ownedR.data?.buildings || []).forEach(x => { ownedMap[x.id] = x.amount ?? 0; });
+  }
+
+  const r = await apiFetch('/api/me/buildings/available');
+  if(!r.ok){ g.innerHTML = `<div class="empty">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+
+  const list = r.data?.available || [];
+  if(!list.length){
+    g.innerHTML = `<div class="empty">No buildings defined yet.<br>
+      Use <strong>Add New Building</strong> to create one.</div>`;
+    return;
+  }
+
+  const enriched = await Promise.all(list.map(async b => {
+    const req = await apiFetch(`/api/me/buildings/${b.id}/requirements`);
+    return {
+      ...b,
+      requirements: req.ok ? req.data : null,
+      owned_amount: ownedMap[b.id] || 0,
+    };
+  }));
+
+  g.innerHTML = '';
+  enriched.forEach(b => g.appendChild(renderAvailableCard(b)));
+}
+
+function renderAvailableCard(b){
+  const el = document.createElement('div');
+  el.className = 'building-card';
+
+  const req = b.requirements || {};
+  const recipe = req.recipe || [];
+  const missing = req.missing || [];
+  const canBuild = req.ok === true;
+  const owned = b.owned_amount || 0;
+
+  const recipeHtml = recipe.length
+    ? `<div class="recipe"><h4>To Build — Requirements</h4>
+       <div class="recipe-list">${recipe.map(r => `
+         <span class="recipe-chip ${escapeHtml(r.kind)}">
+           ${escapeHtml(r.kind)}: ${escapeHtml(r.objectname)} × ${escapeHtml(r.amount)}
+         </span>`).join('')}</div></div>`
+    : `<div class="recipe"><h4>No requirements — build freely</h4></div>`;
+
+  const missingHtml = missing.length
+    ? `<div class="recipe"><h4 style="color:#8b1d1d">Missing</h4>
+       <div class="recipe-list">${missing.map(m => `
+         <span class="recipe-chip"
+               style="background:#fdeaea;color:#8b1d1d;border-color:#f3b7b7">
+           ${m.kind === 'building'
+             ? `${escapeHtml(m.name)} (Lv ${escapeHtml(m.have_level)} → need Lv ${escapeHtml(m.need_level)})`
+             : `${escapeHtml(m.name)} ${escapeHtml(m.have)}/${escapeHtml(m.need)}`}
+         </span>`).join('')}</div></div>`
+    : '';
+
+  el.innerHTML = `
+    <div class="qty-row">
+      <h3>${escapeHtml(b.name)}</h3>
+      <span class="qty-badge" title="You currently own ${escapeHtml(owned)}" style="font-size:1.1rem">
+        ${owned > 0 ? `×${escapeHtml(owned)}` : '<span class="badge">new</span>'}
+      </span>
+    </div>
+    <span class="level">Max Lv ${escapeHtml(b.max_level)}</span>
+    <div class="stats">
+      <span><strong>${escapeHtml(b.usage)}</strong></span>
+      <span>Earns: <strong>$${escapeHtml(b.earns)}</strong> each</span>
+    </div>
+    ${recipeHtml}
+    ${missingHtml}
+    <button class="btn ${canBuild ? 'btn-primary' : 'btn-outline'} build-btn"
+            data-id="${escapeHtml(b.id)}"
+            ${canBuild ? '' : 'disabled title="You are missing required items"'}>
+      <i class="fas fa-hammer"></i>
+      ${canBuild ? (owned > 0 ? `Build another (+1)` : 'Build (+1)') : 'Cannot Build Yet'}
+    </button>
+  `;
+  return el;
+}
+
+$('#availableGrid').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.build-btn');
+  if(!btn || btn.disabled) return;
+
+  const id = btn.dataset.id;
+  if(!confirm('Build one more copy? Required items will be consumed.')) return;
+
+  setBtnLoading(btn, true);
+  const r = await apiFetch(`/api/me/buildings/${id}/build`, { method: 'POST' });
+  setBtnLoading(btn, false);
+
+  if(r.ok){
+    toast('success', 'Built!',
+      `${r.data?.building?.name} ×${r.data?.building?.amount}`);
+    loadAvailable();
+  } else {
+    const missing = r.data?.missing || r.data?.detail?.missing;
+    let extra = '';
+    if (Array.isArray(missing) && missing.length) {
+      extra = ' — missing: ' + missing.map(m => {
+        if (m.kind === 'building') return `${m.name} Lv ${m.have_level}/${m.need_level}`;
+        return `${m.name} ${m.have}/${m.need}`;
+      }).join(', ');
+    }
+    toast('error', 'Build failed', (r.message || 'Requirements not met') + extra);
+  }
+});
+
+$('#refreshAvailable').addEventListener('click', loadAvailable);
+
+/* ============================================================
+   ADD NEW BUILDING
+   ============================================================ */
+$('#newBuildingForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#nbSubmitBtn');
+  const payload = {
+    name:  $('#nbName').value.trim(),
+    usage: $('#nbUsage').value,
+    earns: Number($('#nbEarns').value) || 0,
+  };
+  if (!payload.name) {
+    toast('error', 'Missing name', 'Please enter a building name');
+    return;
+  }
+
+  setBtnLoading(btn, true);
+  const r = await apiFetch('/api/me/buildings/create', {
+    method: 'POST',
+    body: payload,
+  });
+  setBtnLoading(btn, false);
+
+  if (r.ok) {
+    toast('success', 'Building added',
+      `${payload.name} added (×${r.data?.building?.amount ?? 1})`);
+    $('#newBuildingForm').reset();
+    loadAvailable();
+    loadMyBuildings();
+  } else {
+    toast('error', 'Could not add building', r.message);
+  }
+});
+
+/* ============================================================
+   TRANSPORT
+   ============================================================ */
+function loadTransport(){
+  loadTransportInventory();
+}
+
+async function loadTransportInventory(){
+  const c = $('#transportInvList');
+  c.innerHTML = `<div class="empty">Loading…</div>`;
+  const r = await apiFetch('/api/me/inventory');
+  if(!r.ok){ c.innerHTML = `<div class="empty">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+
+  const items = r.data?.inventory || [];
+  if(!items.length){
+    c.innerHTML = `<div class="empty">Your inventory is empty — nothing to send.</div>`;
+    return;
+  }
+
+  c.innerHTML = '';
+  items.forEach(it => {
+    const el = document.createElement('div');
+    el.className = 'item';
+    const kindBadge = it.kind === 'army'
+      ? `<span class="badge blue">army · ${escapeHtml(it.type || '—')}</span>`
+      : `<span class="badge">asset · ${escapeHtml(it.type || '—')}</span>`;
+
+    el.innerHTML = `
+      <div class="item-info">
+        <strong>${escapeHtml(it.name || '—')}</strong>
+        <small>${kindBadge}</small>
+      </div>
+      <div style="display:flex;align-items:center;gap:.7rem">
+        <span style="font-size:1.3rem;font-weight:900;color:var(--dark)">
+          ×${escapeHtml(it.amount ?? 0)}
+        </span>
+        <button class="btn btn-outline btn-sm send-pick"
+                data-name="${escapeHtml(it.name)}"
+                title="Use this name in the form"
+                style="width:auto">
+          <i class="fas fa-arrow-up"></i> Use
+        </button>
+      </div>`;
+    c.appendChild(el);
+  });
+}
+
+$('#transportInvList').addEventListener('click', (e) => {
+  const btn = e.target.closest('.send-pick');
+  if(!btn) return;
+  $('#tpObject').value = btn.dataset.name;
+  toast('info', 'Selected', `Object name set to "${btn.dataset.name}"`);
+});
+
+$('#refreshTransportInv').addEventListener('click', loadTransportInventory);
+
+$('#transportForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#tpSubmitBtn');
+
+  const payload = {
+    to_username: $('#tpTo').value.trim(),
+    objectname:  $('#tpObject').value.trim(),
+    amount:      Number($('#tpAmount').value),
+  };
+
+  if (!payload.to_username) { toast('error', 'Missing recipient', 'Enter a username or email'); return; }
+  if (!payload.objectname)  { toast('error', 'Missing object',    'Enter an object name');      return; }
+  if (!payload.amount || payload.amount < 1) {
+    toast('error', 'Invalid amount', 'Amount must be at least 1');
+    return;
+  }
+
+  if (!confirm(`Send ${payload.amount}× ${payload.objectname} to ${payload.to_username}?`)) return;
+
+  setBtnLoading(btn, true);
+  const r = await apiFetch('/api/me/transport', {
+    method: 'POST',
+    body: payload,
+  });
+  setBtnLoading(btn, false, '<i class="fas fa-paper-plane"></i> Send');
+
+  if (r.ok) {
+    const t = r.data?.transport || {};
+    toast('success', 'Sent!',
+      `${t.amount}× ${t.objectname} → ${t.to_username} (you have ${t.remaining} left)`);
+    $('#transportForm').reset();
+    loadTransportInventory();
+  } else {
+    toast('error', 'Transport failed', r.message);
+  }
+});
+
+/* ============================================================
+   ATTACK
+   ============================================================ */
+function loadAttack(){
+  loadAttackInventory();
+  if (!$('#atUnits').children.length) addAttackRow();
+}
+
+function addAttackRow(presetName = '', presetAmount = 1){
+  const row = document.createElement('div');
+  row.className = 'attack-row';
+  row.innerHTML = `
+    <input type="text" class="at-name" placeholder="Army object name"
+           value="${escapeHtml(presetName)}" required>
+    <input type="number" class="at-amount" min="1" value="${escapeHtml(presetAmount)}" required>
+    <button type="button" class="remove-row" title="Remove">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+  row.querySelector('.remove-row').addEventListener('click', () => {
+    if ($('#atUnits').children.length > 1) row.remove();
+    else toast('info','Keep one','At least one army row is required');
+  });
+  $('#atUnits').appendChild(row);
+}
+
+$('#atAddRow').addEventListener('click', () => addAttackRow());
+
+async function loadAttackInventory(){
+  const c = $('#attackInvList');
+  c.innerHTML = `<div class="empty">Loading…</div>`;
+  const r = await apiFetch('/api/me/inventory');
+  if(!r.ok){ c.innerHTML = `<div class="empty">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+
+  const items = (r.data?.inventory || []).filter(it => it.kind === 'army');
+  if(!items.length){
+    c.innerHTML = `<div class="empty">You have no army objects. Build or acquire some first.</div>`;
+    return;
+  }
+  c.innerHTML = '';
+  items.forEach(it => {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `
+      <div class="item-info">
+        <strong>${escapeHtml(it.name)}</strong>
+        <small>
+          <span class="badge blue">${escapeHtml(it.type || 'army')}</span>
+          <span>Power: ${escapeHtml(it.power ?? 0)}</span>
+        </small>
+      </div>
+      <div style="display:flex;align-items:center;gap:.7rem">
+        <span style="font-size:1.3rem;font-weight:900;color:var(--dark)">
+          ×${escapeHtml(it.amount ?? 0)}
+        </span>
+        <button class="btn btn-outline btn-sm at-pick"
+                data-name="${escapeHtml(it.name)}"
+                data-amount="${escapeHtml(it.amount ?? 1)}"
+                title="Add this to your attack" style="width:auto">
+          <i class="fas fa-plus"></i> Add
+        </button>
+      </div>`;
+    c.appendChild(el);
+  });
+}
+
+$('#attackInvList').addEventListener('click', (e) => {
+  const btn = e.target.closest('.at-pick');
+  if(!btn) return;
+  const name   = btn.dataset.name;
+  const amount = Number(btn.dataset.amount) || 1;
+  addAttackRow(name, amount);
+  toast('info','Added', `Row added for ${name}`);
+});
+
+$('#refreshAttackInv').addEventListener('click', loadAttackInventory);
+
+$('#attackForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#atSubmitBtn');
+
+  const units = [];
+  $$('#atUnits .attack-row').forEach(row => {
+    const name = row.querySelector('.at-name').value.trim();
+    const amt  = Number(row.querySelector('.at-amount').value);
+    if (name && amt > 0) units.push({ objectname: name, amount: amt });
+  });
+
+  const target_username = $('#atTarget').value.trim();
+  const role_message    = $('#atRole').value.trim();
+
+  if (!target_username) { toast('error','Missing target','Enter a username or email'); return; }
+  if (!units.length)    { toast('error','No units','Add at least one army object');   return; }
+
+  const summary = units.map(u => `${u.amount}× ${u.objectname}`).join(', ');
+  if (!confirm(`Attack ${target_username} with:\n${summary}\n\nProceed?`)) return;
+
+  setBtnLoading(btn, true);
+  const r = await apiFetch('/api/me/attack', {
+    method: 'POST',
+    body: { target_username, role_message, units },
+  });
+  setBtnLoading(btn, false, '<i class="fas fa-paper-plane"></i> Submit Attack');
+
+  if (r.ok) {
+    toast('success', 'Attack submitted',
+      `#${r.data?.attack?.id} — waiting for admin review`);
+    $('#attackForm').reset();
+    $('#atUnits').innerHTML = '';
+    addAttackRow();
+  } else {
+    toast('error', 'Attack failed', r.message);
+  }
+});
+
+/* ============================================================
+   LOCATIONS
+   ============================================================ */
+async function loadLocations(){
+  const c = $('#locationsList');
+  c.innerHTML = `<div class="empty">Loading…</div>`;
+  const r = await apiFetch('/api/me/locations');
+  if(!r.ok){ c.innerHTML = `<div class="empty">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  const list = r.data?.locations || [];
+  if(!list.length){ c.innerHTML = `<div class="empty">You own no locations.</div>`; return; }
+
+  c.innerHTML = '';
+  list.forEach(l => {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `
+      <div class="item-info">
+        <strong>${escapeHtml(l.name)}</strong>
+        <small>
+          <span class="badge">${escapeHtml(l.type)}</span>
+          <span>Population: ${escapeHtml(l.population)}</span>
+          <span>${escapeHtml(l.region || '—')}</span>
+        </small>
+      </div>
+      <i class="fas fa-crown" style="color:var(--sky);font-size:1.3rem"></i>`;
+    c.appendChild(el);
+  });
+}
+$('#refreshLocations').addEventListener('click', loadLocations);
+
+/* ============================================================
+   ACTIVITY
+   ============================================================ */
+async function loadActivity(){
+  const c = $('#activityList');
+  c.innerHTML = `<div class="empty">Loading…</div>`;
+  const r = await apiFetch('/api/me/activity');
+  if(!r.ok){ c.innerHTML = `<div class="empty">⚠️ ${escapeHtml(r.message)}</div>`; return; }
+  const list = r.data?.activities || [];
+  if(!list.length){ c.innerHTML = `<div class="empty">No activity recorded yet.</div>`; return; }
+
+  c.innerHTML = '';
+  list.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'item';
+    const opLabel = a.op === 'user' ? 'Using' : 'Producing';
+    const opClass = a.op === 'user' ? 'badge red' : 'badge green';
+    el.innerHTML = `
+      <div class="item-info">
+        <strong>${escapeHtml(a.objectname)} × ${escapeHtml(a.amount)}</strong>
+        <small>
+          <span class="${opClass}">${opLabel}</span>
+          <span>Building: ${escapeHtml(a.building_name || '—')}</span>
+          <span>${escapeHtml((a.created_at||'').slice(0,19))}</span>
+        </small>
+      </div>`;
+    c.appendChild(el);
+  });
+}
+$('#refreshActivity').addEventListener('click', loadActivity);
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(async function init(){
+  await loadProfile();
+})();
+</script>
+
+</body>
+</html>

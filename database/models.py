@@ -3,6 +3,8 @@ from datetime import datetime , timezone
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship, Session, select
 
+import json
+
 
 # ============================================================
 # USER
@@ -46,7 +48,7 @@ class User(SQLModel, table=True):
         return u
 
     @classmethod
-    def get_by_username(cls , session:Session , username):
+    def get_by_username_or_email(cls , session:Session , username):
         stat = select(User).where(User.username==username)
         u = session.exec(stat).first()
         return u
@@ -114,7 +116,7 @@ class Building(SQLModel, table=True):
         if not b: return False
         session.delete(b); session.commit()
         return True
-
+    
 
 # ============================================================
 # BUILDING LEVEL COST  (recipe per level)
@@ -359,6 +361,10 @@ class CityOrCountry(SQLModel, table=True):
         session.delete(loc); session.commit()
         return True
 
+    @classmethod
+    def get_by_owner(cls , session :Session , uid):
+        stat = select(CityOrCountry).where(CityOrCountry.owner_id == uid)
+        return session.exec(stat).all()
 
 # ============================================================
 # USER INVENTORY
@@ -485,6 +491,7 @@ class UserBuilding(SQLModel, table=True):
     user_id: int = Field(foreign_key="users.id", index=True)
     building_id: int = Field(foreign_key="buildings.id", index=True)
     level: int = Field(default=1, ge=1)
+    amount: int = Field(default=0, ge=0)        # NEW: how many copies
 
     @classmethod
     def get_or_create(cls, session, user_id, building_id):
@@ -495,68 +502,110 @@ class UserBuilding(SQLModel, table=True):
                       .where(cls.building_id == building_id)
         ).first()
         if row: return row
-        row = cls(user_id=user_id, building_id=building_id, level=0)
+        row = cls(user_id=user_id, building_id=building_id, level=0, amount=0)
         session.add(row); session.commit(); session.refresh(row)
         return row
 
-    # ---- upgrade: only path that can change a building's level for a user ----
+    @classmethod
+    def check_requirements(cls, session, user_id, building_id, level):
+        """Return {ok, missing, recipe} for reaching `level`."""
+        b = session.get(Building, building_id)
+        if not b:
+            return {"ok": False, "error": "Building not found", "missing": [], "recipe": []}
+
+        recipe = BuildingLevelCost.get_recipe(session, b.id, level)
+        missing = []
+
+        for item in recipe:
+            if item.kind == "money":
+                have = UserInventory.get_amount(session, user_id, "money")
+                if have < item.amount:
+                    missing.append({"kind": "money", "name": "money",
+                                    "need": item.amount, "have": have})
+            elif item.kind == "asset":
+                have = UserInventory.get_amount(session, user_id, item.objectname)
+                if have < item.amount:
+                    missing.append({"kind": "asset", "name": item.objectname,
+                                    "need": item.amount, "have": have})
+            elif item.kind == "building":
+                req_b = Building.get_by_name(session, item.objectname)
+                if not req_b:
+                    missing.append({"kind": "building", "name": item.objectname,
+                                    "need_level": item.amount, "have_level": 0,
+                                    "reason": "not found"})
+                    continue
+                row = session.exec(
+                    select(cls).where(cls.user_id == user_id)
+                              .where(cls.building_id == req_b.id)
+                ).first()
+                have_level = row.level if row else 0
+                have_amount = row.amount if row else 0
+                # need: at least `item.amount` copies? or just level?
+                # here we treat item.amount as the required LEVEL
+                if have_level < item.amount or have_amount < 1:
+                    missing.append({"kind": "building", "name": item.objectname,
+                                    "need_level": item.amount, "have_level": have_level,
+                                    "have_amount": have_amount})
+        return {"ok": len(missing) == 0, "missing": missing, "recipe": recipe}
+
+    @classmethod
+    def build_new(cls, session, user_id, building_id):
+        """Build one new copy at level 1 (consumes the level-1 recipe)."""
+        b = session.get(Building, building_id)
+        if not b: return None, "Building not found"
+
+        check = cls.check_requirements(session, user_id, building_id, level=1)
+        if not check["ok"]:
+            return None, check["missing"]
+
+        # consume ingredients
+        for item in check["recipe"]:
+            if item.kind == "money":
+                UserInventory.add_amount(session, user_id, "money", -item.amount)
+            elif item.kind == "asset":
+                UserInventory.add_amount(session, user_id, item.objectname, -item.amount)
+
+        row = cls.get_or_create(session, user_id, building_id)
+        if row.level < 1:
+            row.level = 1
+        row.amount += 1                      # ← increment quantity
+        session.add(row); session.commit(); session.refresh(row)
+        return row, None
+
     @classmethod
     def upgrade(cls, session, user_id, buildingname):
-        """
-        Check the recipe of level (current + 1). Deduct required assets/money
-        from the user's inventory, and check that required buildings are owned
-        at the correct level. On success, raise the user's level by 1.
-        """
+        """Upgrade ALL copies of a building to the next level."""
         building = Building.get_by_name(session, buildingname)
         if not building: return None, "Building not found"
 
         row = cls.get_or_create(session, user_id, building.id)
         if row is None: return None, "User not found"
+        if row.amount < 1:
+            return None, "You don't own this building"
 
         next_level = row.level + 1
         if next_level > building.max_level:
             return None, f"Building has no level {next_level} yet"
 
-        recipe = BuildingLevelCost.get_recipe(session, building.id, next_level)
-        if not recipe:
-            return None, f"No recipe defined for level {next_level}"
+        check = cls.check_requirements(session, user_id, building.id, next_level)
+        if not check["ok"]:
+            return None, check["missing"]
 
-        # 1) validate all requirements
-        for item in recipe:
-            if item.kind == "money":
-                # treat money as a special "money" asset held in inventory
-                have = UserInventory.get_amount(session, user_id, "money")
-                if have < item.amount:
-                    return None, f"Not enough money (need {item.amount}, have {have})"
-            elif item.kind == "asset":
-                have = UserInventory.get_amount(session, user_id, item.objectname)
-                if have < item.amount:
-                    return None, f"Not enough {item.objectname} (need {item.amount}, have {have})"
-            elif item.kind == "building":
-                req_b = Building.get_by_name(session, item.objectname)
-                if not req_b:
-                    return None, f"Required building '{item.objectname}' not found"
-                req_row = cls.get_or_create(session, user_id, req_b.id)
-                # The amount for a "building" ingredient = required level
-                if req_row.level < item.amount:
-                    return None, (
-                        f"'{item.objectname}' must be level {item.amount} "
-                        f"(you have level {req_row.level})"
-                    )
-
-        # 2) deduct
-        for item in recipe:
+        # deduct once per upgrade (not per copy) — adjust if you want per-copy
+        for item in check["recipe"]:
             if item.kind == "money":
                 UserInventory.add_amount(session, user_id, "money", -item.amount)
             elif item.kind == "asset":
                 UserInventory.add_amount(session, user_id, item.objectname, -item.amount)
-            # buildings are not consumed
 
         row.level = next_level
         session.add(row); session.commit(); session.refresh(row)
         return row, None
-
-
+    @classmethod
+    def get_all(cls , session:Session):
+        stat = select(UserBuilding)
+        ubs = session.exec(stat).all()
+        return list(ubs)
 # ============================================================
 # BUILDING WEEKLY ACTIVITY  (using / producing)
 # ============================================================
@@ -568,7 +617,7 @@ class BuildingActivity(SQLModel, table=True):
     objectname: str = Field(index=True, max_length=150)
     op: str = Field(default="produce", max_length=20)   # "user" | "produce"
     amount: int = Field(default=0, ge=0)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default=datetime.now(timezone.utc))
 
     building: Optional[Building] = Relationship()
 
@@ -594,6 +643,65 @@ class BuildingActivity(SQLModel, table=True):
     @classmethod
     def delete(cls, session, aid):
         row = session.get(cls, aid)
+        if not row: return False
+        session.delete(row); session.commit()
+        return True
+    
+# ============================================================
+# ATTACK REQUEST
+# ============================================================
+class AttackRequest(SQLModel, table=True):
+    __tablename__ = "attack_requests"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    attacker_id: int = Field(foreign_key="users.id", index=True)
+    target_id: int = Field(foreign_key="users.id", index=True)
+    role_message: str = Field(default="", max_length=500)
+    status: str = Field(default="pending", max_length=20)   # pending | approved | rejected
+    created_at: datetime = Field(default=datetime.now(timezone.utc))
+
+    # JSON-encoded list of {objectname, amount}
+    units_json: str = Field(default="[]", max_length=5000)
+
+    # ---- helpers ----
+    @classmethod
+    def create(cls, session, *, attacker_id, target_id, units, role_message):
+        import json
+        row = cls(
+            attacker_id=attacker_id,
+            target_id=target_id,
+            units_json=json.dumps(units),
+            role_message=role_message or "",
+        )
+        session.add(row); session.commit(); session.refresh(row)
+        return row
+
+    @classmethod
+    def get(cls, session, rid): return session.get(cls, rid)
+
+    @classmethod
+    def get_all(cls, session):
+        return session.exec(
+            select(cls).order_by(cls.created_at.desc())
+        ).all()
+
+    @classmethod
+    def get_pending(cls, session):
+        return session.exec(
+            select(cls).where(cls.status == "pending")
+                     .order_by(cls.created_at.desc())
+        ).all()
+
+    def units(self):
+        try:
+            data = json.loads(self.units_json or "[]")
+            return data if isinstance(data, list) else []
+        except Exception:
+            return []
+
+    @classmethod
+    def delete(cls, session, rid):
+        row = session.get(cls, rid)
         if not row: return False
         session.delete(row); session.commit()
         return True
